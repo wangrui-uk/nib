@@ -7,6 +7,15 @@
     <language>en</language>
     <!-- items -->
     <item>
+      <title>Nib 2.2.2</title>
+      <pubDate>Fri, 27 Nov 2026 23:43:13 GMT</pubDate>
+      <sparkle:version>27</sparkle:version>
+      <sparkle:shortVersionString>2.2.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[<ul><li><b>Chinese and Korean.</b> Each paragraph&#x27;s language is detected on your Mac, and the AI is told the language and its rules: for Chinese, wrong characters (在/再, 的/得/地…), measure words, full-width punctuation, and Simplified or Traditional kept as written; for Korean, spacing (띄어쓰기), spelling, particles, and the speech level and honorifics kept as written. Casual chat and mixed Chinese/Korean–English text are left alone. On the held-out evaluation, Chinese fix accuracy rose from 3/5 to 5/5, with English and Korean at 100%.</li><li><b>Settings → Languages I write in</b>: choose which languages are checked as you type (default: English plus your Mac&#x27;s languages); &quot;Other languages&quot; covers the rest.</li><li>Fixed: live checking never checked Chinese text (it needed three space-separated words) and skipped short Korean sentences.</li><li>Fixed: ⌥⌥ could occasionally change a correct Chinese character (it now runs at temperature 0).</li><li>Suggestions whose fix rewrote more than the marked words (seen with some Qwen and DeepSeek models) are narrowed to what actually changes, so applying them can&#x27;t duplicate text.</li><li>Underline positions: VS Code places Chinese, Japanese and Korean text by its real width (measured from the editor font and macOS&#x27;s fallback fonts: Hangul ≈ 1.44 and Chinese ≈ 1.66 ASCII columns, including word wrap); rich editors (Slack, Chrome) place underlines by measured text width. Verified hands-off with Chinese and Korean in TextEdit, a Chrome textarea and a Chrome rich editor, and in VS Code.</li><li>Providers: a parameter a model rejects (e.g. `temperature` on newer Claude models, `response_format` on DeepSeek) is remembered, so later calls need one request instead of two. Test connection works with thinking models.</li></ul>]]></description>
+      <enclosure url="https://github.com/wangrui-uk/nib/releases/download/v2.2.2/Nib-2.2.2.dmg" sparkle:edSignature="aM0bMTX5naDVvqYuw7v/e00R+7PaXmCbwuMJ4PodqoTzo+0FpvAjszmG57KQBTFg7P0+XSTgLGeYmxQTRrcVCQ==" length="3000371" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>Nib 2.2.1</title>
       <pubDate>Fri, 27 Nov 2026 18:39:33 GMT</pubDate>
       <sparkle:version>26</sparkle:version>
