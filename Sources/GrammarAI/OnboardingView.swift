@@ -59,7 +59,19 @@ struct OnboardingView: View {
                 }
             }
 
-            step(3, "Try it", done: tried) {
+            step(3, "Privacy: what's sent where", done: settings.privacyConsent) {
+                Text(Consent.notice()).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
+                if settings.privacyConsent {
+                    StatusPill(ok: true, okText: "Live checking allowed", badText: "")
+                } else {
+                    HStack {
+                        Button("Allow Live Checking") { settings.privacyConsent = true; settings.liveChecking = true }
+                        Text("Until you do, nothing is checked as you type.").font(.caption).foregroundColor(.secondary)
+                    }
+                }
+            }
+
+            step(4, "Try it", done: tried) {
                 Text(settings.usesDoubleOption
                      ? "Click in the box below, then tap **⌥ Option** twice quickly."
                      : "Click in the box below, then press **\(settings.hotKeyDisplay)**.").foregroundColor(.secondary)
@@ -76,7 +88,7 @@ struct OnboardingView: View {
             HStack {
                 Text("You can reopen this from the menu bar icon.").font(.caption).foregroundColor(.secondary)
                 Spacer()
-                Button(m.axTrusted && keyReady ? "Done" : "Finish later") { onDone() }
+                Button(m.axTrusted && keyReady && settings.privacyConsent ? "Done" : "Finish later") { onDone() }
                     .keyboardShortcut(.defaultAction)
             }
         }

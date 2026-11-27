@@ -39,6 +39,10 @@ struct SettingsView: View {
 
             Section {
                 Toggle("Underline mistakes as I type", isOn: $settings.liveChecking)
+                    .onChange(of: settings.liveChecking) { on in
+                        guard on, !settings.privacyConsent else { return }
+                        DispatchQueue.main.async { if !Consent.ask() { settings.liveChecking = false } }
+                    }
                 Toggle("Allow underlines in code editors (experimental)", isOn: $settings.allowCodeEditors)
                 Text("VS Code, Cursor and Windsurf. In the main editor only prose files are checked (.md, .markdown, .txt, .rst and untitled files), and only the lines on screen; code files are never sent. In VS Code, also turn on its Settings → “Editor: Accessibility Support” → on, or it doesn't show where its text is. Side boxes (commit message, search, chat) are checked like any field. ⌥⌥ and ⇧⇧ work in code editors either way.")
                     .font(.caption).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -165,6 +169,36 @@ struct SettingsView: View {
                         .font(.system(.body, design: .rounded).weight(.medium))
                         .padding(.horizontal, 10).padding(.vertical, 3)
                         .background(RoundedRectangle(cornerRadius: 6).fill(Color.secondary.opacity(0.15)))
+                }
+            }
+
+            Section("Privacy") {
+                Text(Consent.notice()).font(.callout).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
+                if settings.privacyConsent {
+                    HStack {
+                        StatusPill(ok: true, okText: "Live checking allowed", badText: "")
+                        Spacer()
+                        Button("Withdraw") { settings.privacyConsent = false; settings.liveChecking = false }
+                    }
+                } else {
+                    HStack {
+                        StatusPill(ok: false, okText: "", badText: "Live checking not allowed")
+                        Spacer()
+                        Button("Allow Live Checking") { Consent.ask() }
+                    }
+                }
+                Link("Privacy details →", destination: URL(string: "https://wangrui-uk.github.io/nib/privacy.html")!).font(.callout)
+            }
+
+            if Updates.shared.isAvailable {
+                Section("Updates") {
+                    Toggle("Check for updates automatically", isOn: Binding(get: { Updates.shared.automaticallyChecks },
+                                                                           set: { Updates.shared.automaticallyChecks = $0 }))
+                    HStack {
+                        Text("Nib \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")").foregroundColor(.secondary)
+                        Spacer()
+                        Button("Check Now") { Updates.shared.checkForUpdates(nil) }
+                    }
                 }
             }
 

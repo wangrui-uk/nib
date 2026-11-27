@@ -80,3 +80,5 @@ shasum -a 256 "$DMG"
 
 for f in dist/*; do [ "$f" = "$DMG" ] && continue; echo "  removing older $f"; rm -rf -- "$f"; done
 echo "Done: $DMG"
+[ "$PUBLISH" = 1 ] && ./publish.sh "$VERSION"
+exit 0

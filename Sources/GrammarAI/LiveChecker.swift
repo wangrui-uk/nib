@@ -86,6 +86,7 @@ final class LiveChecker {
               step("no correction, suggestion or rewrite card open", !paused && !Surfaces.shared.modalUpChecked),
               step("Accessibility allowed for Nib", AXIsProcessTrusted() || allowOwnProcess),
               step("AI provider set up", s.apiKey != nil, s.provider.name),
+              step("live checking allowed (privacy notice)", s.privacyConsent, s.privacyConsent ? "" : "not confirmed yet: Settings → Privacy"),
               step("front app found", app?.bundleIdentifier != nil),
               let app, let id = app.bundleIdentifier,
               step("front app isn't Nib", allowOwnProcess || app.processIdentifier != getpid()),

@@ -25,6 +25,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         SystemTextChecking.restore()
     }
 
+    @objc func checkForUpdates() { Updates.shared.checkForUpdates(nil) }
+
     func applicationDidFinishLaunching(_ note: Notification) {
         log("launched; accessibility=\(AXIsProcessTrusted()) apiKey=\(Settings.shared.apiKey != nil)")
         installMainMenu()
@@ -69,6 +71,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let dir = URL(fileURLWithPath: CommandLine.arguments[i + 1])
             Task { @MainActor in await E2E.run(self, dir: dir) }
             return
+        }
+        Updates.shared.start()
+        // Existing users updating to 2.1: ask once for the OK before live checking runs. (New users get the same
+        // notice as a step of the setup guide.)
+        let st = Settings.shared
+        if st.persist, st.liveChecking, !st.privacyConsent, AXIsProcessTrusted(), st.apiKey != nil {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { Consent.ask() }
         }
         if CommandLine.arguments.contains("--relaunched-for-accessibility") && !AXIsProcessTrusted() {
             // Ask macOS to list Nib again in Privacy & Security → Accessibility, and show the guide.
@@ -249,6 +258,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let i = item("⚠︎ Live checking paused: \(e.message.prefix(70))", #selector(openSettings))
             menu.addItem(i)
         }
+        if s.liveChecking && !s.privacyConsent && status == .ready {
+            menu.addItem(item("Live checking needs your OK — Review…", #selector(askConsent)))
+        }
         if !hotKeyOK { menu.addItem(item("⚠︎ \(s.hotKeyDisplay) is taken — change it in Settings", #selector(openSettings))) }
         menu.addItem(.separator())
 
@@ -271,6 +283,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
         menu.addItem(item("Setup Guide…", #selector(openOnboarding)))
         menu.addItem(item("Copy Diagnostics…", #selector(copyDiagnostics)))
+        if Updates.shared.isAvailable { menu.addItem(item("Check for Updates…", #selector(checkForUpdates))) }
         menu.addItem(item("Settings…", #selector(openSettings), key: ","))
         menu.addItem(.separator())
         let quit = NSMenuItem(title: "Quit Nib", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -307,7 +320,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func toggleSuggest() { Settings.shared.suggestFirst.toggle() }
-    @objc private func toggleLive() { Settings.shared.liveChecking.toggle(); refreshIcon() }
+    @objc private func toggleLive() {
+        let s = Settings.shared
+        if !s.liveChecking && !s.privacyConsent { Consent.ask() } else { s.liveChecking.toggle() }
+        refreshIcon()
+    }
+    @objc private func askConsent() { Consent.ask(); refreshIcon() }
     @objc private func togglePerApp(_ sender: NSMenuItem) {
         guard let id = sender.representedObject as? String else { return }
         let s = Settings.shared
@@ -601,17 +619,20 @@ enum Main {
             // Test runs: use this model, in memory only.
             Settings.shared.persist = false
             Settings.shared.models[Settings.shared.provider.rawValue] = args[i + 1]
+            Settings.shared.privacyConsent = true
         }
         if args.contains("--allow-code-editors") {
             // Test runs: switch the experimental code-editor underlines on, in memory only.
             Settings.shared.persist = false
             Settings.shared.allowCodeEditors = true
+            Settings.shared.privacyConsent = true
         }
         if args.contains("--e2e") {
             // A test copy: settings in memory only, never paused, and the user's macOS text settings untouched.
             Settings.shared.persist = false
             Settings.shared.pausedUntil = nil
             SystemTextChecking.disabled = true
+            Settings.shared.privacyConsent = true
         }
         if args.count > 1 && args[1].hasPrefix("--") && !args.contains("--e2e") && !args.contains("--relaunched-for-accessibility") {
             Keychain.migrate = false
@@ -894,6 +915,13 @@ enum DiffSelfTest {
             print("inline diff \(InlineDiff.plain(long) == "… eight nine ten waswere one two three …" ? "OK" : "FAIL"): both ends shortened to three words (\(InlineDiff.plain(long)))")
             print("inline diff \(InlineDiff.refine("was", "were") == [.removed("was"), .added("were")] ? "OK" : "FAIL"): a changed word stays whole")
             print("inline diff \(InlineDiff.refine("apple", "apples") == [.same("apple"), .removed(""), .added("s"), .same("")] ? "OK" : "FAIL"): an added ending is refined")
+        }
+
+        // Privacy notice: names the provider and says live checking sends paragraphs as you type.
+        do {
+            let n = Consent.notice(.claude)
+            let ok = n.contains("Claude (Anthropic)") && n.contains("paragraphs as you type") && n.contains("never contains your text")
+            print("privacy \(ok ? "OK" : "FAIL"): the notice names the provider and what live checking sends")
         }
 
         // Overlapping issues become one suggestion.

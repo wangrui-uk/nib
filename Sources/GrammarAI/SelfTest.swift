@@ -5,6 +5,8 @@ import ApplicationServices
 enum AXSelfTest {
     static func run() {
         setvbuf(stdout, nil, _IONBF, 0)
+        Settings.shared.persist = false
+        Settings.shared.privacyConsent = true // in memory only
         let app = NSApplication.shared
         app.setActivationPolicy(.regular)
         let w = NSWindow(contentRect: NSRect(x: 200, y: 200, width: 500, height: 120), styleMask: [.titled], backing: .buffered, defer: false)
@@ -294,6 +296,8 @@ enum UIRender {
 enum LiveSelfTest {
     static func run() {
         setvbuf(stdout, nil, _IONBF, 0)
+        Settings.shared.persist = false
+        Settings.shared.privacyConsent = true // in memory only
         let app = NSApplication.shared
         app.setActivationPolicy(.regular)
         let w = NSWindow(contentRect: NSRect(x: 300, y: 300, width: 520, height: 160), styleMask: [.titled], backing: .buffered, defer: false)

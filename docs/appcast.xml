@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Nib</title>
+    <link>https://wangrui-uk.github.io/nib/appcast.xml</link>
+    <description>Updates for Nib. Each update is EdDSA-signed and notarised by Apple.</description>
+    <language>en</language>
+    <!-- items -->
+  </channel>
+</rss>
