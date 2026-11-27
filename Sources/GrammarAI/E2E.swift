@@ -332,6 +332,8 @@ enum E2E {
                     record("     AXBoundsForRange(first mark): \(LiveChecker.plainBounds(el, m.range).map { "\(Int($0.minX)),\(Int($0.minY)) \(Int($0.width))×\(Int($0.height))" } ?? "none"); field (AX) \(f.map { "\(Int($0.minX)),\(Int($0.minY)) \(Int($0.width))×\(Int($0.height))" } ?? "?")")
                     if TextMarkers.supported(el) { record("     text-marker " + TextMarkers.describe(el, m.range, fieldFrame: f)) }
                 }
+                record("SCREENSHOT \(c.name)")
+                await sleep(2.5) // the test script takes a screenshot now
                 let before = readField(app)
                 LiveChecker.shared.apply(m)
                 await sleep(0.6)

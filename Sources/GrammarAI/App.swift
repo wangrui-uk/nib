@@ -638,6 +638,7 @@ enum Main {
             Settings.shared.pausedUntil = nil
             SystemTextChecking.disabled = true
             Settings.shared.privacyConsent = true
+            Settings.shared.writingLanguages = ["en", "zh", "ko"] // test copies check every test language (in memory)
         }
         if args.count > 1 && args[1].hasPrefix("--") && !args.contains("--e2e") && !args.contains("--relaunched-for-accessibility") {
             Keychain.migrate = false
@@ -1056,12 +1057,16 @@ enum DiffSelfTest {
                 let got = Lang.detect(t, previous: prev, hints: hints)
                 print("language \(got == want ? "OK" : "FAIL"): \(want) detected (\(got ?? "nil"))")
             }
-            print("wide chars \(Monaco.columns("한국어") == 6 && Monaco.columns("ab中") == 4 && Monaco.columns("a\tb") == 6 ? "OK" : "FAIL"): Hangul and Han count two columns")
+            let ratios = Monaco.wideRatios
+            print("wide chars \((1.3...1.6).contains(ratios.hangul) && (1.5...1.8).contains(ratios.cjk) ? "OK" : "FAIL"): Hangul and Han widths measured from the editor font (\(String(format: "%.2f", ratios.hangul)), \(String(format: "%.2f", ratios.cjk)) columns)")
+            print("wide chars \(abs(Monaco.columns("ab中") - (2 + ratios.cjk)) < 0.001 && Monaco.columns("a\tb") == 6 ? "OK" : "FAIL"): mixed text and tabs add up")
+            let perRow = Int(8 / ratios.hangul)
             let rows = Monaco.rowStarts("가나다라마바사아자차" as NSString, cols: 8)
-            print("wide chars \(rows == [0, 4, 8] ? "OK" : "FAIL"): CJK text without spaces wraps by columns (\(rows))")
+            print("wide chars \(rows.first == 0 && rows.count >= 2 && rows[1] == perRow ? "OK" : "FAIL"): CJK text without spaces wraps by measured width (\(rows))")
             let g = Monaco.Geometry(rowTop: 100, left: 10, lineHeight: 18, charWidth: 7, wrapColumns: 80, cursor: 0)
             let r = Monaco.rects(text: "가나 abc", range: ("가나 abc" as NSString).range(of: "abc"), g)
-            print("wide chars \(r.first?.minX == 10 + 5 * 7 ? "OK" : "FAIL"): a word after Hangul is placed after their double width")
+            let wantX = 10 + (2 * ratios.hangul + 1) * 7
+            print("wide chars \(r.first.map { abs($0.minX - wantX) < 0.5 } == true ? "OK" : "FAIL"): a word after Hangul is placed after their measured width")
             let (x0, _) = TextMarkers.proportionalSpan("가나ab", NSRange(location: 2, length: 2), width: 100)
             print("wide chars \(x0 > 55 ? "OK" : "FAIL"): text-run placement measures widths (\(Int(x0)) of 100, not 50)")
             print("live check \(LiveChecker.worthChecking("我明天再来找你") && !LiveChecker.worthChecking("ok go") ? "OK" : "FAIL"): Chinese without spaces is checked; two words aren't")

@@ -7,7 +7,7 @@
 - Fixed: live checking never checked Chinese text (it needed three space-separated words) and skipped short Korean sentences.
 - Fixed: ⌥⌥ could occasionally change a correct Chinese character (it now runs at temperature 0).
 - Suggestions whose fix rewrote more than the marked words (seen with some Qwen and DeepSeek models) are narrowed to what actually changes, so applying them can't duplicate text.
-- Underline positions: VS Code counts Chinese, Japanese and Korean characters as double width (including word wrap); rich editors (Slack, Chrome) place underlines by measured text width.
+- Underline positions: VS Code places Chinese, Japanese and Korean text by its real width (measured from the editor font and macOS's fallback fonts: Hangul ≈ 1.44 and Chinese ≈ 1.66 ASCII columns, including word wrap); rich editors (Slack, Chrome) place underlines by measured text width. Verified hands-off with Chinese and Korean in TextEdit, a Chrome textarea and a Chrome rich editor, and in VS Code.
 - Providers: a parameter a model rejects (e.g. `temperature` on newer Claude models, `response_format` on DeepSeek) is remembered, so later calls need one request instead of two. Test connection works with thinking models.
 
 ## 2.2.1

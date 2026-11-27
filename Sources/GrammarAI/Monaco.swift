@@ -128,17 +128,34 @@ enum Monaco {
               let cf = LiveChecker.frame(child) else { return nil }
         let longest = text.components(separatedBy: "\n").map { columns($0) }.max() ?? 0
         guard longest > 0 else { return nil }
-        let cw = cf.width / CGFloat(longest)
+        let cw = cf.width / longest
         guard cw >= 4, cw <= 20 else { return nil }
         return Geometry(rowTop: f.minY, left: f.minX, lineHeight: f.height, charWidth: cw, wrapColumns: max(20, Int(f.width / cw)), cursor: cursor)
     }
 
-    /// Display columns of a line (a tab counts as 4).
-    static func columns(_ s: String) -> Int {
+    /// How wide Hangul, Chinese/Japanese and emoji are in ASCII columns, as macOS draws them in VS Code's default
+    /// font (Menlo) with its fallback fonts. Measured once: on macOS 27 Hangul ≈ 1.44 and Han/kana ≈ 1.66 — not 2,
+    /// so counting them as two columns drifted underlines to the right after a few characters.
+    static let wideRatios: (hangul: CGFloat, cjk: CGFloat, emoji: CGFloat) = {
+        guard let menlo = NSFont(name: "Menlo-Regular", size: 13) else { return (1.44, 1.66, 2) }
+        func w(_ x: String) -> CGFloat { (x as NSString).size(withAttributes: [.font: menlo]).width }
+        let a = w("a")
+        guard a > 0 else { return (1.44, 1.66, 2) }
+        func ratio(_ x: String, _ fallback: CGFloat) -> CGFloat { let r = w(x) / a; return r > 0.9 && r < 2.6 ? r : fallback }
+        return (ratio("가", 1.44), ratio("中", 1.66), ratio("😀", 2))
+    }()
+
+    /// Display width of a string in ASCII columns (a tab counts as 4; wide characters by `wideRatios`).
+    static func columns(_ s: String) -> CGFloat {
         s.unicodeScalars.reduce(0) { n, u in
             if u == "\t" { return n + 4 }
             if u.properties.generalCategory == .nonspacingMark || u.value == 0x200D || (0xFE00...0xFE0F).contains(u.value) { return n }
-            return n + (Lang.isWide(u) ? 2 : 1)
+            guard Lang.isWide(u) else { return n + 1 }
+            switch u.value {
+            case 0x1100...0x11FF, 0x3130...0x318F, 0xAC00...0xD7A3: return n + wideRatios.hangul
+            case 0x1F300...0x1FAFF: return n + wideRatios.emoji
+            default: return n + wideRatios.cjk
+            }
         }
     }
 
@@ -147,11 +164,11 @@ enum Monaco {
         // Walk in display columns (wide characters count 2); break after the last space that fits, else mid-word
         // (CJK text has no spaces and Monaco breaks it anywhere).
         var starts = [0]
-        var rowStart = 0, col = 0, lastSpace = -1, i = 0
+        var rowStart = 0, col: CGFloat = 0, lastSpace = -1, i = 0
         while i < line.length {
             let r = line.rangeOfComposedCharacterSequence(at: i)
             let w = columns(line.substring(with: r))
-            if col + w > cols, i > rowStart {
+            if col + w > CGFloat(cols) + 0.01, i > rowStart {
                 let brk = lastSpace > rowStart ? lastSpace : i
                 starts.append(brk)
                 rowStart = brk
@@ -199,9 +216,9 @@ enum Monaco {
             let end = min(NSMaxRange(range) - lineStarts[k], rowEnd)
             let prefix = l.substring(with: NSRange(location: rs[r], length: col - rs[r]))
             let piece = l.substring(with: NSRange(location: col, length: end - col))
-            let x = g.left + CGFloat(columns(prefix)) * g.charWidth
+            let x = g.left + columns(prefix) * g.charWidth
             let y = g.rowTop + CGFloat(delta(k, r)) * g.lineHeight
-            out.append(CGRect(x: x, y: y, width: max(4, CGFloat(columns(piece)) * g.charWidth), height: g.lineHeight))
+            out.append(CGRect(x: x, y: y, width: max(4, columns(piece) * g.charWidth), height: g.lineHeight))
             pos = lineStarts[k] + end
         }
         return out
