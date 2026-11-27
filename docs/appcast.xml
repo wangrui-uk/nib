@@ -7,6 +7,15 @@
     <language>en</language>
     <!-- items -->
     <item>
+      <title>Nib 2.2.1</title>
+      <pubDate>Fri, 27 Nov 2026 18:39:33 GMT</pubDate>
+      <sparkle:version>26</sparkle:version>
+      <sparkle:shortVersionString>2.2.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[<ul><li><b>Better prompts, measured.</b> A new evaluation set (synthetic only, in `Evals/`) and harness (`Nib --eval`) compared the old and new instructions on held-out cases. Rewrites no longer invent details, change numbers (&quot;40k&quot; → &quot;$40,000&quot;), or follow instructions hidden in the text; the &quot;Confident&quot;, &quot;Sales&quot;, &quot;Apology&quot;, &quot;Feedback&quot; and &quot;Complaint&quot; styles no longer ask for things the text doesn&#x27;t contain. Held-out rewrite pass rate 2/7 → 6/7; live-checking accuracy unchanged at 100%, with about 40% fewer input tokens per check.</li><li>Code is never &quot;corrected&quot;: identifiers, file names, URLs, e-mails, @mentions, #channels and anything in backticks are left alone by live checking, and ⌥⌥ puts `code` back exactly as it was.</li><li>Fixed: an underline could be placed inside another word when the mistake was a short word that also appears inside an earlier one (&quot;er&quot; in &quot;gestern&quot;).</li></ul>]]></description>
+      <enclosure url="https://github.com/wangrui-uk/nib/releases/download/v2.2.1/Nib-2.2.1.dmg" sparkle:edSignature="TTK4clPIvZuF6N84xuCYI1+DHGAUVT+2ByizYXr8dYCJw8EdILGhHp/Te2ccMIeL5Wkvua1hYG5xIl09sHgdDQ==" length="2965941" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>Nib 2.2.0</title>
       <pubDate>Fri, 27 Nov 2026 17:02:35 GMT</pubDate>
       <sparkle:version>25</sparkle:version>
