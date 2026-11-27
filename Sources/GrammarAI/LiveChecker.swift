@@ -335,17 +335,33 @@ final class LiveChecker {
 
     // MARK: Requests
 
-    private static func worthChecking(_ s: String) -> Bool {
-        s.split(whereSeparator: \.isWhitespace).count >= 3 && s.contains(where: \.isLetter)
+    /// Enough text to be worth a check: three words, or (Chinese, Japanese, Korean: few or no spaces) five letters.
+    static func worthChecking(_ s: String) -> Bool {
+        guard s.contains(where: \.isLetter) else { return false }
+        if s.unicodeScalars.contains(where: Lang.isWide) { return s.filter(\.isLetter).count >= 5 }
+        return s.split(whereSeparator: \.isWhitespace).count >= 3
     }
+
+    /// Detected language per paragraph text (short paragraphs inherit the one before).
+    private var languages: [String: String] = [:]
 
     private func maybeRequest(_ paragraphs: [(range: NSRange, text: String)]) {
         guard !inFlight, Date().timeIntervalSince(lastChange) >= Self.pause, Date() >= nextRequest else { return }
         var todo: [String] = []
         var size = 0
-        for p in paragraphs where cache[p.text] == nil && Self.worthChecking(p.text) && !todo.contains(p.text) {
+        var language: String?
+        var previous: String?
+        if languages.count > 500 { languages.removeAll() }
+        for p in paragraphs {
+            let lang = languages[p.text] ?? Lang.detect(p.text, previous: previous)
+            if let lang { languages[p.text] = lang; previous = lang }
+            guard cache[p.text] == nil, Self.worthChecking(p.text), !todo.contains(p.text) else { continue }
+            guard Lang.isChecked(lang) else { continue } // Settings → Languages: not checked
+            // One language per request, so the model gets that language's rules.
+            if !todo.isEmpty, lang != language { continue }
             if size + p.text.count > Self.maxChars, !todo.isEmpty { break }
             todo.append(p.text)
+            language = lang
             size += p.text.count + 2
         }
         guard !todo.isEmpty else { return }
@@ -355,7 +371,7 @@ final class LiveChecker {
         let appLabel = "\(NSWorkspace.shared.frontmostApplication?.localizedName ?? "?") (\(bundleID))"
         Task { @MainActor in
             do {
-                let issues = Self.dropReverts(try await Gemini.proofread(todo.joined(separator: "\n\n")), applied: appliedFixes)
+                let issues = Self.dropReverts(try await Gemini.proofread(todo.joined(separator: "\n\n"), language: language), applied: appliedFixes)
                 if cache.count > 400 { cache.removeAll() }
                 for t in todo { cache[t] = issues.filter { t.contains($0.text) } }
                 lastError = nil

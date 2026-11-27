@@ -19,6 +19,7 @@ Nib is free and open source (MIT). There's no Nib account and no Nib server: you
 - **Correct a field: ⌥⌥** (double-tap Option). Fixes the selection, or the whole field if nothing is selected. Choose to apply straight away or see the changes first. **⌃⌥Z** undoes the correction.
 - **Rewrite a selection: ⇧⇧** or the ✨ button. Rewrites in 13 editable styles (professional, concise, friendly, formal, apology, polite decline…) or your own.
 - **Pause: ⌘⌘.** While paused, nothing is read and nothing is sent.
+- **English, Chinese and Korean**, with each paragraph's language detected on your Mac and checked by that language's rules; other languages work too. Settings → Languages chooses which languages are checked as you type.
 - **Your choice of AI:** Gemini (AI Studio or Vertex AI), Claude, OpenAI, DeepSeek, Qwen, or any OpenAI-compatible server, including local ones like Ollama or LM Studio.
 - **Usage statistics.** Settings → Usage shows calls and tokens for today, 7 or 30 days, by feature and model, with CSV export. They're kept on your Mac only.
 - **Careful with your text.** Only the changed words are written back, so formatting is kept. Every write is read back to confirm it worked. Password fields and terminals are never read.

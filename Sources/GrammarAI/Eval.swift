@@ -18,12 +18,13 @@ enum Eval {
     }
     struct ProofCase: Decodable {
         let id, split, category, text: String
+        var lang: String? = nil
         let issues: [ExpectedIssue]
         var protected: [String]? = nil
         var mustNotChange: Bool? = nil
     }
-    struct CorrectCase: Decodable { let id, split, text: String; let expected: [String]; let mustNotChange: Bool }
-    struct RewriteCase: Decodable { let id, split, style, text, language, note: String; let mustKeep: [String]; var mustNotAdd: [String]? = nil }
+    struct CorrectCase: Decodable { let id, split, text: String; let expected: [String]; let mustNotChange: Bool; var lang: String? = nil }
+    struct RewriteCase: Decodable { let id, split, style, text, language, note: String; var lang: String? = nil; let mustKeep: [String]; var mustNotAdd: [String]? = nil }
     private struct File<T: Decodable>: Decodable { let cases: [T] }
 
     // MARK: Results
@@ -31,7 +32,7 @@ enum Eval {
     struct Call: Codable { var input = 0, output = 0, thinking = 0, latency = 0.0, reported = false }
 
     struct ProofResult: Codable {
-        var id = "", category = "", split = ""
+        var id = "", category = "", split = "", lang = "en"
         var expected = 0, found = 0, fixed = 0, optionalExpected = 0, optionalFound = 0
         var issues = 0, falseFlags = 0, violations = 0, examplesExpected = 0, examplesGiven = 0
         var validJSON = true, error = ""
@@ -39,12 +40,12 @@ enum Eval {
         var call = Call()
     }
     struct CorrectResult: Codable {
-        var id = "", split = "", output = "", error = ""
+        var id = "", split = "", output = "", error = "", lang = "en"
         var exact = false, violation = false
         var call = Call()
     }
     struct RewriteResult: Codable {
-        var id = "", split = "", style = "", output = "", error = ""
+        var id = "", split = "", style = "", output = "", error = "", lang = "en"
         var missing: [String] = []
         var facts = false, noInvention = false, meaning = false, language = false, styleMatch = 0, lengthOK = false, formatOK = false
         var score = 0, comment = "", judgeInput = ""
@@ -68,6 +69,16 @@ enum Eval {
         var calls = 0, avgInput = 0.0, avgOutput = 0.0, avgLatency = 0.0, judgeCalls = 0
         var proofAvgInput = 0.0, correctAvgInput = 0.0, rewriteAvgInput = 0.0
         var overall = 0.0
+        var languageAware = false
+        var byLang: [String: LangStats] = [:]
+    }
+
+    struct LangStats: Codable {
+        var pCases = 0, expected = 0, fixed = 0, issues = 0, falseFlags = 0, violations = 0
+        var cCases = 0, cExact = 0, cViolations = 0, rCases = 0, rPass = 0, rViolations = 0
+        var fixAccuracy: Double { expected == 0 ? 1 : Double(fixed) / Double(expected) }
+        var precision: Double { issues == 0 ? 1 : Double(issues - falseFlags) / Double(issues) }
+        var f1: Double { precision + fixAccuracy == 0 ? 0 : 2 * precision * fixAccuracy / (precision + fixAccuracy) }
     }
 
     // MARK: Run
@@ -107,11 +118,17 @@ enum Eval {
         Usage.shared.recording = false
         loadPrompts(dir.appendingPathComponent("prompts/\(prompts)"))
         // Code guards are part of a version: on only if its folder has a "guards" file (the shipped app has them on).
+        let pdir = dir.appendingPathComponent("prompts/\(prompts)")
+        Gemini.languageAware = prompts == "builtin" || FileManager.default.fileExists(atPath: pdir.appendingPathComponent("language-aware").path)
+        Lang.blockOverrides = (try? Data(contentsOf: pdir.appendingPathComponent("languages.json")))
+            .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: String] }
+        s.writingLanguages = ["en", "zh", "ko"] // fixed hints, so runs don't depend on this Mac's settings
         Gemini.guards = prompts == "builtin" || FileManager.default.fileExists(atPath: dir.appendingPathComponent("prompts/\(prompts)/guards").path)
         Gemini.rewriteSeedOverride = 7
 
         var sum = Summary(label: label, prompts: prompts, model: model, split: split, date: ISO8601DateFormatter().string(from: Date()))
         sum.guards = Gemini.guards
+        sum.languageAware = Gemini.languageAware
         var proof: [ProofResult] = [], correct: [CorrectResult] = [], rewrite: [RewriteResult] = []
         func inSplit(_ x: String) -> Bool { split == "all" || x == split }
 
@@ -244,6 +261,7 @@ enum Eval {
     private static func proofCase(_ c: ProofCase) async -> ProofResult {
         let (issues, call, err) = await timed { try await Gemini.proofread(c.text) }
         var r = score(c, issues: issues ?? [])
+        r.lang = c.lang ?? "en"
         r.validJSON = Gemini.lastProofreadValidJSON
         r.error = err
         r.call = call
@@ -254,7 +272,7 @@ enum Eval {
 
     private static func correctCase(_ c: CorrectCase) async -> CorrectResult {
         let (out, call, err) = await timed { try await Gemini.correct(c.text) }
-        var r = CorrectResult(id: c.id, split: c.split, output: out ?? "", error: err, call: call)
+        var r = CorrectResult(id: c.id, split: c.split, output: out ?? "", error: err, lang: c.lang ?? "en", call: call)
         let o = (out ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         r.exact = c.expected.contains { $0.trimmingCharacters(in: .whitespacesAndNewlines) == o }
         let lines = { (s: String) in s.components(separatedBy: "\n").count }
@@ -282,7 +300,7 @@ enum Eval {
         var style = RewriteStyles.builtIns.first { $0.id == c.style } ?? RewriteStyles.builtIns[0]
         if let o = styleOverrides[style.id] { style.instruction = o }
         let (out, call, err) = await timed { try await Gemini.rewrite(c.text, style: style) }
-        var r = RewriteResult(id: c.id, split: c.split, style: c.style, output: out ?? "", error: err, call: call)
+        var r = RewriteResult(id: c.id, split: c.split, style: c.style, output: out ?? "", error: err, lang: c.lang ?? Lang.base(c.language), call: call)
         let lower = (out ?? "").lowercased()
         // mustKeep: "a|b" = either; mustNotAdd: not in the original, so it must not appear in the rewrite.
         r.missing = c.mustKeep.filter { k in !k.split(separator: "|").contains { lower.contains($0.lowercased()) } }
@@ -338,8 +356,10 @@ enum Eval {
             dump.rewrite[i].comment = "[\(judgeName)] " + (v["reason"] as? String ?? "")
             n += 1
         }
-        var s = dump.summary
-        s = Summary(label: s.label, prompts: s.prompts, model: s.model, split: s.split, date: s.date)
+        let old = dump.summary
+        var s = Summary(label: old.label, prompts: old.prompts, model: old.model, split: old.split, date: old.date)
+        s.guards = old.guards
+        s.languageAware = old.languageAware
         summarise(&s, dump.proofread, dump.correct, dump.rewrite)
         write(s, dump.proofread, dump.correct, dump.rewrite, to: run.deletingLastPathComponent())
         print("merged \(n) verdicts")
@@ -377,6 +397,13 @@ enum Eval {
         if !c.isEmpty { parts.append(Double(s.cExact) / Double(s.cCases)) }
         if !w.isEmpty { parts.append(Double(s.rPass) / Double(s.rCases)) }
         s.overall = parts.isEmpty ? 0 : parts.reduce(0, +) / Double(parts.count)
+        func group(_ l: String) -> String { ["en", "zh", "ko"].contains(Lang.base(l)) ? Lang.base(l) : "other" }
+        var by: [String: LangStats] = [:]
+        for r in p { var g = by[group(r.lang)] ?? LangStats(); g.pCases += 1; g.expected += r.expected; g.fixed += r.fixed; g.issues += r.issues
+            g.falseFlags += r.falseFlags; g.violations += r.violations; by[group(r.lang)] = g }
+        for r in c { var g = by[group(r.lang)] ?? LangStats(); g.cCases += 1; if r.exact { g.cExact += 1 }; if r.violation { g.cViolations += 1 }; by[group(r.lang)] = g }
+        for r in w { var g = by[group(r.lang)] ?? LangStats(); g.rCases += 1; if r.pass { g.rPass += 1 }; if r.violation { g.rViolations += 1 }; by[group(r.lang)] = g }
+        s.byLang = by
     }
 
     private static func write(_ s: Summary, _ p: [ProofResult], _ c: [CorrectResult], _ w: [RewriteResult], to dir: URL) {
@@ -395,7 +422,7 @@ enum Eval {
         var md = """
         # Nib prompt eval: \(s.label) (\(s.split))
 
-        \(s.date) · model `\(s.model)` · prompts `\(s.prompts)` · code guards \(s.guards ? "on" : "off") · \(s.calls) calls (+\(s.judgeCalls) judge)
+        \(s.date) · model `\(s.model)` · prompts `\(s.prompts)` · code guards \(s.guards ? "on" : "off") · language-aware \(s.languageAware ? "on" : "off") · \(s.calls) calls (+\(s.judgeCalls) judge)
 
         | Metric | Value |
         |---|---|
@@ -417,6 +444,18 @@ enum Eval {
         | Avg input / output tokens per call | \(Int(s.avgInput)) / \(Int(s.avgOutput)) |
         | Avg input tokens: proofread / correct / rewrite | \(Int(s.proofAvgInput)) / \(Int(s.correctAvgInput)) / \(Int(s.rewriteAvgInput)) |
         | Avg latency | \(String(format: "%.2f", s.avgLatency)) s |
+
+        ## By language
+
+        | Language | Proofread cases | Fix accuracy | Precision | F1 | Violations | Correct exact | Rewrite pass |
+        |---|---|---|---|---|---|---|---|
+
+        """
+        for l in ["en", "zh", "ko", "other"] {
+            guard let g = s.byLang[l] else { continue }
+            md += "| \(l) | \(g.pCases) | \(pct(g.fixAccuracy)) (\(g.fixed)/\(g.expected)) | \(pct(g.precision)) | \(pct(g.f1)) | \(g.violations + g.cViolations + g.rViolations) | \(g.cExact)/\(g.cCases) | \(g.rPass)/\(g.rCases) |\n"
+        }
+        md += """
 
         ## Proofread failures
 

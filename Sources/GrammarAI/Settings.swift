@@ -83,10 +83,20 @@ final class Settings: ObservableObject {
     @Published var liveChecking: Bool { didSet { guard persist else { return }; defaults.set(liveChecking, forKey: "liveChecking") } }
     /// The user read the privacy notice and allowed live checking (asked before it first runs).
     @Published var privacyConsent: Bool { didSet { guard persist else { return }; defaults.set(privacyConsent, forKey: "privacyConsent") } }
+    /// Languages the user writes in (base codes); live checking skips the others it knows (Settings → Languages).
+    @Published var writingLanguages: [String] { didSet { guard persist else { return }; defaults.set(writingLanguages, forKey: "writingLanguages") } }
+    /// Whether text in languages not listed in Settings → Languages is checked.
+    @Published var checkOtherLanguages: Bool { didSet { guard persist else { return }; defaults.set(checkOtherLanguages, forKey: "checkOtherLanguages") } }
     /// Show "Today: N calls · X tokens" in the menu.
     @Published var showUsageInMenu: Bool { didSet { guard persist else { return }; defaults.set(showUsageInMenu, forKey: "showUsageInMenu") } }
     /// Bundle ids where live checking is off.
     @Published var liveDisabledApps: [String] { didSet { guard persist else { return }; defaults.set(liveDisabledApps, forKey: "liveDisabledApps") } }
+
+    static func defaultWritingLanguages() -> [String] {
+        var out = ["en"]
+        for l in Locale.preferredLanguages { let b = Lang.base(l); if !out.contains(b) { out.append(b) } }
+        return out
+    }
 
     private init() {
         if let stored = defaults.string(forKey: "model"), Settings.oldDefaultModels.contains(stored) {
@@ -130,6 +140,9 @@ final class Settings: ObservableObject {
         liveChecking = defaults.object(forKey: "liveChecking") as? Bool ?? true
         privacyConsent = defaults.bool(forKey: "privacyConsent")
         showUsageInMenu = defaults.bool(forKey: "showUsageInMenu")
+        // Default: English plus the Mac's preferred languages.
+        writingLanguages = defaults.stringArray(forKey: "writingLanguages") ?? Settings.defaultWritingLanguages()
+        checkOtherLanguages = defaults.object(forKey: "checkOtherLanguages") as? Bool ?? true
         liveDisabledApps = defaults.stringArray(forKey: "liveDisabledApps") ?? []
         if defaults.object(forKey: "hotKeyCode") != nil {
             hotKeyCode = UInt32(defaults.integer(forKey: "hotKeyCode"))

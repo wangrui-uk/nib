@@ -5,7 +5,13 @@ import Carbon.HIToolbox
 /// `open -n build/GrammarAI.app --args --e2e DIR`: drives real apps on throwaway documents and
 /// writes results to DIR/results.txt. Runs inside the app so it uses the app's Accessibility grant.
 enum E2E {
-    static let sample = "i has went to the store yesterday and buyed three apple, they was delicious."
+    static let englishSample = "i has went to the store yesterday and buyed three apple, they was delicious."
+    /// `--sample zh|ko`: Chinese or Korean test text (synthetic) with a few errors, to check CJK underline positions.
+    static let samples = ["zh": "我昨天去超市买了三个书，他跑的很快，我们明天在讨论吧。",
+                          "ko": "저는 한국어를 공부할수 있어요. 어떻해 해야 할지 모르겠어요. 저는 사과을 좋아해요."]
+    static var sample: String {
+        CommandLine.arguments.firstIndex(of: "--sample").flatMap { $0 + 1 < CommandLine.arguments.count ? samples[CommandLine.arguments[$0 + 1]] : nil } ?? englishSample
+    }
 
     struct Case {
         let name: String
@@ -16,9 +22,14 @@ enum E2E {
 
     static func prepare(_ dir: URL) -> [Case] {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let rich = NSMutableAttributedString(string: "i has went to the ", attributes: [.font: NSFont.systemFont(ofSize: 14)])
-        rich.append(NSAttributedString(string: "store", attributes: [.font: NSFont.boldSystemFont(ofSize: 14)]))
-        rich.append(NSAttributedString(string: " yesterday and buyed three apple, they was delicious.", attributes: [.font: NSFont.systemFont(ofSize: 14)]))
+        let rich = NSMutableAttributedString()
+        if sample == englishSample {
+            rich.append(NSAttributedString(string: "i has went to the ", attributes: [.font: NSFont.systemFont(ofSize: 14)]))
+            rich.append(NSAttributedString(string: "store", attributes: [.font: NSFont.boldSystemFont(ofSize: 14)]))
+            rich.append(NSAttributedString(string: " yesterday and buyed three apple, they was delicious.", attributes: [.font: NSFont.systemFont(ofSize: 14)]))
+        } else {
+            rich.append(NSAttributedString(string: sample, attributes: [.font: NSFont.systemFont(ofSize: 14)]))
+        }
         let rtf = dir.appendingPathComponent("GrammarAI Test rich.rtf")
         try? rich.rtf(from: NSRange(location: 0, length: rich.length))?.write(to: rtf)
         let rtfSel = dir.appendingPathComponent("GrammarAI Test selection.rtf")
@@ -26,7 +37,7 @@ enum E2E {
         func page(_ name: String, _ body: String) -> URL {
             let url = dir.appendingPathComponent("\(name).html")
             try? """
-            <!doctype html><html><head><title>GrammarAI Test \(name)</title></head><body>\(body)
+            <!doctype html><html><head><meta charset="utf-8"><title>GrammarAI Test \(name)</title></head><body>\(body)
             <script>const f=document.getElementById('f');f.focus();
             if(f.setSelectionRange){f.setSelectionRange(f.value.length,f.value.length)}</script></body></html>
             """.write(to: url, atomically: true, encoding: .utf8)
@@ -34,7 +45,8 @@ enum E2E {
         }
         let ta = page("textarea", "<textarea id=f rows=4 cols=40>\(sample)</textarea>")
         let input = page("input", "<input id=f size=80 value=\"\(sample)\">")
-        let ce = page("contenteditable", "<div id=f contenteditable style='border:1px solid #999;padding:6px'>i has went to the <b>store</b> yesterday and buyed three apple, they was delicious.</div>")
+        let ceBody = sample == englishSample ? "i has went to the <b>store</b> yesterday and buyed three apple, they was delicious." : sample
+        let ce = page("contenteditable", "<div id=f contenteditable style='border:1px solid #999;padding:6px'>\(ceBody)</div>")
         return [
             Case(name: "TextEdit rich text (whole doc)", bundleID: "com.apple.TextEdit", file: rtf),
             Case(name: "TextEdit rich text (selection)", bundleID: "com.apple.TextEdit", file: rtfSel, selectText: "buyed three apple"),

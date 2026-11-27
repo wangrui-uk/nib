@@ -98,7 +98,9 @@ extension Gemini {
 
     /// Rewrites in a style. `attempt` > 0 (Try again) raises the temperature and changes the seed for a different version.
     static func rewrite(_ text: String, style: RewriteStyle, attempt: Int = 0) async throws -> String {
-        let out = try await AI.complete(AIRequest(system: rewriteInstruction(style), user: text,
+        // Rewrites keep the language: only the language line, not the proofreading rules.
+        let lang = languageAware ? Lang.detect(text).flatMap { Lang.base($0) == "en" ? nil : $0 }.map { "\n\nThe text is \(Lang.name($0)) (\($0)): write the rewrite in \(Lang.name($0)), never translate it." } ?? "" : ""
+        let out = try await AI.complete(AIRequest(system: rewriteInstruction(style) + lang, user: text,
                                                   temperature: min(0.5 + 0.2 * Double(attempt), 1.0),
                                                   seed: rewriteSeedOverride ?? Int.random(in: 1...1_000_000), feature: .rewrite))
         return clean(out, original: text)

@@ -5,9 +5,9 @@ Synthetic test cases (never real user text) for Nib's three AI tasks, and a harn
 - `proofread.json`: live-checking cases, with the expected issues (span, acceptable fixes, kind) or none (`mustNotChange`).
 - `correct.json`: ⌥⌥ cases with acceptable outputs.
 - `rewrite.json`: rewrite cases with must-keep / must-not-add strings; graded by an LLM judge too.
-- `prompts/<version>/`: candidate instructions (`proofread.txt`, `correct.txt`, `rewrite.txt` with `{style}`, optional `styles.json`, and a `guards` file to turn on the code guards). `v0` is the 2.2.0 baseline; `v5` is what 2.2.1 ships (and equals the built-in prompts).
+- `prompts/<version>/`: candidate instructions (`proofread.txt`, `correct.txt`, `rewrite.txt` with `{style}`, optional `styles.json`, and a `guards` file to turn on the code guards). `v0` is the 2.2.0 baseline; `v5` is what 2.2.1 ships; `v6` (language-aware: a `language-aware` file turns on the language line and per-language rules) is what 2.2.2 ships and equals the built-in prompts.
 
-Each case has a `split`: iterate on `dev`, report on `test`.
+Each case has a `lang` and a `split` (per language, so every language is on both sides): iterate on `dev`, report on `test`.
 
 ```sh
 B=build/Nib.app/Contents/MacOS/Nib

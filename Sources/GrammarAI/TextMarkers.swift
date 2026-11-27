@@ -407,13 +407,34 @@ enum TextMarkers {
         return (starts, match)
     }
 
+    /// The run's text (from the field's text, by the run's offsets).
+    private static func runText(_ el: AXUIElement, _ run: Run) -> NSString? {
+        guard let full = TextTarget.text(el)?.0 as NSString?, NSMaxRange(NSRange(location: run.start, length: run.length)) <= full.length else { return nil }
+        return full.substring(with: NSRange(location: run.start, length: run.length)) as NSString
+    }
+
+    /// Where a range lies inside a run of `width` points, by measured text width rather than character count, so
+    /// wide characters (Chinese, Korean, Japanese) and narrow ones (i, l, spaces) are placed right. Pure, for self-tests.
+    static func proportionalSpan(_ text: NSString, _ r: NSRange, width: CGFloat) -> (CGFloat, CGFloat) {
+        let font = NSFont.systemFont(ofSize: 13)
+        func w(_ s: String) -> CGFloat { (s as NSString).size(withAttributes: [.font: font]).width }
+        let total = w(text as String)
+        guard total > 0 else { return (0, width) }
+        let a = w(text.substring(to: r.location)), b = w(text.substring(to: min(text.length, NSMaxRange(r))))
+        return (width * a / total, width * b / total)
+    }
+
     private static func runBounds(_ el: AXUIElement, _ range: NSRange) -> CGRect? {
         guard let run = runs(el).first(where: { $0.start <= range.location && range.location < $0.start + $0.length }),
               run.frame.height > 0, run.frame.height < 40, run.length > 0 else { return nil }
-        let w = run.frame.width / CGFloat(run.length)
         let local = range.location - run.start
         let len = min(range.length, run.start + run.length - range.location)
-        return CGRect(x: run.frame.minX + w * CGFloat(local), y: run.frame.minY, width: max(4, w * CGFloat(len)), height: run.frame.height)
+        guard let text = runText(el, run) else {
+            let w = run.frame.width / CGFloat(run.length)
+            return CGRect(x: run.frame.minX + w * CGFloat(local), y: run.frame.minY, width: max(4, w * CGFloat(len)), height: run.frame.height)
+        }
+        let (x0, x1) = Self.proportionalSpan(text, NSRange(location: local, length: len), width: run.frame.width)
+        return CGRect(x: run.frame.minX + x0, y: run.frame.minY, width: max(4, x1 - x0), height: run.frame.height)
     }
 
     private struct Line { let y: CGFloat; let height: CGFloat; let start: Int; let nextStart: Int? }

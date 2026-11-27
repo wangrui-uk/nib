@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.2.2
+
+- **Chinese and Korean.** Each paragraph's language is detected on your Mac, and the AI is told the language and its rules: for Chinese, wrong characters (在/再, 的/得/地…), measure words, full-width punctuation, and Simplified or Traditional kept as written; for Korean, spacing (띄어쓰기), spelling, particles, and the speech level and honorifics kept as written. Casual chat and mixed Chinese/Korean–English text are left alone. On the held-out evaluation, Chinese fix accuracy rose from 3/5 to 5/5, with English and Korean at 100%.
+- **Settings → Languages I write in**: choose which languages are checked as you type (default: English plus your Mac's languages); "Other languages" covers the rest.
+- Fixed: live checking never checked Chinese text (it needed three space-separated words) and skipped short Korean sentences.
+- Fixed: ⌥⌥ could occasionally change a correct Chinese character (it now runs at temperature 0).
+- Suggestions whose fix rewrote more than the marked words (seen with some Qwen and DeepSeek models) are narrowed to what actually changes, so applying them can't duplicate text.
+- Underline positions: VS Code counts Chinese, Japanese and Korean characters as double width (including word wrap); rich editors (Slack, Chrome) place underlines by measured text width.
+- Providers: a parameter a model rejects (e.g. `temperature` on newer Claude models, `response_format` on DeepSeek) is remembered, so later calls need one request instead of two. Test connection works with thinking models.
+
 ## 2.2.1
 
 - **Better prompts, measured.** A new evaluation set (synthetic only, in `Evals/`) and harness (`Nib --eval`) compared the old and new instructions on held-out cases. Rewrites no longer invent details, change numbers ("40k" → "$40,000"), or follow instructions hidden in the text; the "Confident", "Sales", "Apology", "Feedback" and "Complaint" styles no longer ask for things the text doesn't contain. Held-out rewrite pass rate 2/7 → 6/7; live-checking accuracy unchanged at 100%, with about 40% fewer input tokens per check.

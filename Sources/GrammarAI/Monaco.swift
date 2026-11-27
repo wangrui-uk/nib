@@ -134,16 +134,36 @@ enum Monaco {
     }
 
     /// Display columns of a line (a tab counts as 4).
-    static func columns(_ s: String) -> Int { (s as NSString).length + s.filter { $0 == "\t" }.count * 3 }
+    static func columns(_ s: String) -> Int {
+        s.unicodeScalars.reduce(0) { n, u in
+            if u == "\t" { return n + 4 }
+            if u.properties.generalCategory == .nonspacingMark || u.value == 0x200D || (0xFE00...0xFE0F).contains(u.value) { return n }
+            return n + (Lang.isWide(u) ? 2 : 1)
+        }
+    }
 
     /// Start offsets (UTF-16, within the line) of the line's visual rows under word wrap at `cols` columns.
     static func rowStarts(_ line: NSString, cols: Int) -> [Int] {
-        var starts = [0], pos = 0
-        while line.length - pos > cols {
-            var brk = pos + cols
-            var i = pos + cols
-            while i > pos { if line.character(at: i - 1) == 32 { brk = i; break }; i -= 1 }
-            starts.append(brk); pos = brk
+        // Walk in display columns (wide characters count 2); break after the last space that fits, else mid-word
+        // (CJK text has no spaces and Monaco breaks it anywhere).
+        var starts = [0]
+        var rowStart = 0, col = 0, lastSpace = -1, i = 0
+        while i < line.length {
+            let r = line.rangeOfComposedCharacterSequence(at: i)
+            let w = columns(line.substring(with: r))
+            if col + w > cols, i > rowStart {
+                let brk = lastSpace > rowStart ? lastSpace : i
+                starts.append(brk)
+                rowStart = brk
+                col = columns(line.substring(with: NSRange(location: brk, length: NSMaxRange(r) - brk)))
+                lastSpace = -1
+                if line.character(at: i) == 32 { lastSpace = NSMaxRange(r) }
+                i = NSMaxRange(r)
+                continue
+            }
+            col += w
+            if line.character(at: i) == 32 { lastSpace = NSMaxRange(r) }
+            i = NSMaxRange(r)
         }
         return starts
     }

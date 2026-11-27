@@ -172,6 +172,23 @@ struct SettingsView: View {
                 }
             }
 
+            Section {
+                ForEach(Lang.offered, id: \.self) { code in
+                    Toggle(Lang.name(code), isOn: Binding(
+                        get: { settings.writingLanguages.contains(code) },
+                        set: { on in
+                            if on { if !settings.writingLanguages.contains(code) { settings.writingLanguages.append(code) } }
+                            else { settings.writingLanguages.removeAll { $0 == code } }
+                        }))
+                }
+                Toggle("Other languages", isOn: $settings.checkOtherLanguages)
+            } header: {
+                Text("Languages I write in")
+            } footer: {
+                Text("Live checking detects each paragraph's language on your Mac and checks it by that language's rules. Text in a language you turn off here isn't checked as you type (⌥⌥ and rewrites still work on it).")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+
             UsageSection()
 
             Section("Privacy") {

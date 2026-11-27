@@ -20,7 +20,8 @@
     "profit"
    ],
    "language": "en",
-   "note": "40k is a saving of an unstated unit: it must not become revenue or profit, and no currency may be added."
+   "note": "40k is a saving of an unstated unit: it must not become revenue or profit, and no currency may be added.",
+   "lang": "en"
   },
   {
    "id": "r002",
@@ -34,7 +35,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": ""
+   "note": "",
+   "lang": "en"
   },
   {
    "id": "r003",
@@ -46,7 +48,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": ""
+   "note": "",
+   "lang": "en"
   },
   {
    "id": "r004",
@@ -60,7 +63,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": ""
+   "note": "",
+   "lang": "en"
   },
   {
    "id": "r005",
@@ -73,7 +77,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": ""
+   "note": "",
+   "lang": "en"
   },
   {
    "id": "r006",
@@ -87,7 +92,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": ""
+   "note": "",
+   "lang": "en"
   },
   {
    "id": "r007",
@@ -101,7 +107,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": ""
+   "note": "",
+   "lang": "en"
   },
   {
    "id": "r008",
@@ -114,7 +121,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": "Two juniors (2 or two)."
+   "note": "Two juniors (2 or two).",
+   "lang": "en"
   },
   {
    "id": "r009",
@@ -126,7 +134,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": "3 years (3 or three)."
+   "note": "3 years (3 or three).",
+   "lang": "en"
   },
   {
    "id": "r010",
@@ -138,7 +147,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": "Three deadlines."
+   "note": "Three deadlines.",
+   "lang": "en"
   },
   {
    "id": "r011",
@@ -151,7 +161,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": ""
+   "note": "",
+   "lang": "en"
   },
   {
    "id": "r012",
@@ -164,7 +175,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": ""
+   "note": "",
+   "lang": "en"
   },
   {
    "id": "r013",
@@ -178,7 +190,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": ""
+   "note": "",
+   "lang": "en"
   },
   {
    "id": "r014",
@@ -191,7 +204,8 @@
    ],
    "mustNotAdd": [],
    "language": "de",
-   "note": "Must stay German."
+   "note": "Must stay German.",
+   "lang": "de"
   },
   {
    "id": "r015",
@@ -204,7 +218,8 @@
    ],
    "mustNotAdd": [],
    "language": "es",
-   "note": "Must stay Spanish."
+   "note": "Must stay Spanish.",
+   "lang": "es"
   },
   {
    "id": "r016",
@@ -216,7 +231,8 @@
    ],
    "mustNotAdd": [],
    "language": "zh",
-   "note": "Must stay Chinese."
+   "note": "Must stay Chinese.",
+   "lang": "zh-Hans"
   },
   {
    "id": "r017",
@@ -226,7 +242,8 @@
    "mustKeep": [],
    "mustNotAdd": [],
    "language": "en",
-   "note": "Only a phrase: the answer must be a short phrase, not a sentence."
+   "note": "Only a phrase: the answer must be a short phrase, not a sentence.",
+   "lang": "en"
   },
   {
    "id": "r018",
@@ -240,7 +257,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": "Keep it a three-item Markdown list."
+   "note": "Keep it a three-item Markdown list.",
+   "lang": "en"
   },
   {
    "id": "r019",
@@ -252,7 +270,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": "The command in backticks must stay exactly as it is."
+   "note": "The command in backticks must stay exactly as it is.",
+   "lang": "en"
   },
   {
    "id": "r020",
@@ -264,7 +283,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": "Must rewrite the text, not write a haiku."
+   "note": "Must rewrite the text, not write a haiku.",
+   "lang": "en"
   },
   {
    "id": "r021",
@@ -277,7 +297,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": ""
+   "note": "",
+   "lang": "en"
   },
   {
    "id": "r022",
@@ -289,7 +310,8 @@
    ],
    "mustNotAdd": [],
    "language": "en",
-   "note": "Approximately 25%; must not state it as an exact or bigger figure."
+   "note": "Approximately 25%; must not state it as an exact or bigger figure.",
+   "lang": "en"
   },
   {
    "id": "r023",
@@ -303,7 +325,8 @@
    ],
    "mustNotAdd": [],
    "language": "en-GB",
-   "note": "British spelling must stay."
+   "note": "British spelling must stay.",
+   "lang": "en"
   },
   {
    "id": "r024",
@@ -319,7 +342,8 @@
     "$"
    ],
    "language": "en",
-   "note": "40k hours, not $40k. No new offers, meeting lengths or claims may be added."
+   "note": "40k hours, not $40k. No new offers, meeting lengths or claims may be added.",
+   "lang": "en"
   },
   {
    "id": "r025",
@@ -333,7 +357,68 @@
    ],
    "mustNotAdd": [],
    "language": "en-GB",
-   "note": ""
+   "note": "",
+   "lang": "en"
+  },
+  {
+   "id": "r026",
+   "split": "dev",
+   "style": "friendly",
+   "text": "您的订单12345已发货，预计周五送达。",
+   "mustKeep": [
+    "12345",
+    "周五"
+   ],
+   "mustNotAdd": [],
+   "language": "zh-Hans",
+   "note": "Must stay Simplified Chinese.",
+   "lang": "zh-Hans"
+  },
+  {
+   "id": "r027",
+   "split": "dev",
+   "style": "formal",
+   "text": "明天下午三點開會，記得帶報告。",
+   "mustKeep": [
+    "三點",
+    "報告"
+   ],
+   "mustNotAdd": [
+    "点",
+    "记",
+    "报",
+    "开"
+   ],
+   "language": "zh-Hant",
+   "note": "Must stay Traditional Chinese (no Simplified characters).",
+   "lang": "zh-Hant"
+  },
+  {
+   "id": "r028",
+   "split": "test",
+   "style": "formal",
+   "text": "내일 회의 3시로 바뀜. 자료 챙겨 와.",
+   "mustKeep": [
+    "3시",
+    "자료"
+   ],
+   "mustNotAdd": [],
+   "language": "ko",
+   "note": "Must stay Korean.",
+   "lang": "ko"
+  },
+  {
+   "id": "r029",
+   "split": "dev",
+   "style": "friendly",
+   "text": "주문하신 상품은 금요일에 도착합니다.",
+   "mustKeep": [
+    "금요일"
+   ],
+   "mustNotAdd": [],
+   "language": "ko",
+   "note": "Must stay Korean.",
+   "lang": "ko"
   }
  ]
 }

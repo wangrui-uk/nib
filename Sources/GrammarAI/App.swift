@@ -642,6 +642,10 @@ enum Main {
         if args.count > 1 && args[1].hasPrefix("--") && !args.contains("--e2e") && !args.contains("--relaunched-for-accessibility") {
             Keychain.migrate = false
         }
+        if let i = args.firstIndex(of: "--correct-temp"), i + 1 < args.count, let t = Double(args[i + 1]) { Gemini.correctTemperature = t }
+        if let i = args.firstIndex(of: "--detect"), i + 1 < args.count {
+            print(Lang.detect(args[i + 1], hints: ["en", "zh", "ko"]) ?? "nil"); exit(0)
+        }
         if let i = args.firstIndex(of: "--eval-merge"), i + 2 < args.count {
             Eval.merge(run: URL(fileURLWithPath: args[i + 1]), verdicts: URL(fileURLWithPath: args[i + 2]),
                        judgeName: args.firstIndex(of: "--judge-name").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } ?? "judge")
@@ -684,6 +688,27 @@ enum Main {
                                                                   user: "He dont know where the files is.", temperature: 0, schema: schema, timeout: 20), ep)
                         print("[\(p.rawValue)] structured issues: \(AI.sanitise(out)) (\(String(format: "%.2f", Date().timeIntervalSince(t1)))s)")
                     } catch { print("[\(p.rawValue)] structured issues: Not working: \(error.localizedDescription)") }
+                    // The app's own paths with this provider (in memory): live proofread, ⌥⌥ correct, rewrite.
+                    s.provider = p
+                    s.models[p.rawValue] = ep.model
+                    func tok() -> String {
+                        guard let u = Usage.lastParsed else { return "no usage" }
+                        return u.reported ? "\(u.input ?? 0) in / \(u.output ?? 0) out\(u.thinking.map { " / \($0) thinking" } ?? "")" : "tokens not reported"
+                    }
+                    func timed(_ name: String, _ body: () async throws -> String) async {
+                        Usage.lastParsed = nil
+                        let t = Date()
+                        do { let r = try await body(); print("[\(p.rawValue)] \(name): \(r) (\(String(format: "%.2f", Date().timeIntervalSince(t)))s, \(tok()))") }
+                        catch { print("[\(p.rawValue)] \(name): Not working: \(error.localizedDescription)") }
+                    }
+                    await timed("proofread") { try await Gemini.proofread("They was late and he dont know why.").map { "\($0.text) → \($0.fix)" }.joined(separator: "; ") }
+                    await timed("proofread (ko)") { try await Gemini.proofread("저는 한국어를 공부할수 있어요.").map { "\($0.text) → \($0.fix)" }.joined(separator: "; ") }
+                    await timed("proofread (zh)") { try await Gemini.proofread("我明天在来找你，好吗？").map { "\($0.text) → \($0.fix)" }.joined(separator: "; ") }
+                    await timed("correct") { try await Gemini.correct("She dont like it, and their late.").debugDescription }
+                    await timed("rewrite") {
+                        let style = RewriteStyles.builtIns.first { $0.id == "concise" }!
+                        return try await Gemini.rewrite("I wanted to let you know that we have decided to move the launch from March 3 to March 17.", style: style).debugDescription
+                    }
                 }
                 sem.signal()
             }
@@ -1015,6 +1040,61 @@ enum DiffSelfTest {
             let apology = loaded.first { $0.id == "apology" }!.instruction, sales = loaded.first { $0.id == "sales" }!.instruction
             let ok = apology == RewriteStyles.builtIns.first { $0.id == "apology" }!.instruction && apology != old && sales == "My own sales text"
             print("rewrite styles \(ok ? "OK" : "FAIL"): unedited built-in styles get the improved text; edited ones are kept")
+        }
+
+        // Chinese and Korean: language detection, wide characters in VS Code geometry and text runs, live-check threshold.
+        do {
+            let hints = ["en", "zh", "ko"]
+            let det: [(String, String?, String)] = [
+                ("저는 한국어를 공부할 수 있어요.", nil, "ko"), ("我明天再来找你，好吗？", nil, "zh-Hans"),
+                ("這個問題我們已經討論過了，但是他還是不明白。", nil, "zh-Hant"), ("The quarterly report is attached for your review.", nil, "en"),
+                ("ok", "ko", "ko")]
+            for (t, prev, want) in det {
+                let got = Lang.detect(t, previous: prev, hints: hints)
+                print("language \(got == want ? "OK" : "FAIL"): \(want) detected (\(got ?? "nil"))")
+            }
+            print("wide chars \(Monaco.columns("한국어") == 6 && Monaco.columns("ab中") == 4 && Monaco.columns("a\tb") == 6 ? "OK" : "FAIL"): Hangul and Han count two columns")
+            let rows = Monaco.rowStarts("가나다라마바사아자차" as NSString, cols: 8)
+            print("wide chars \(rows == [0, 4, 8] ? "OK" : "FAIL"): CJK text without spaces wraps by columns (\(rows))")
+            let g = Monaco.Geometry(rowTop: 100, left: 10, lineHeight: 18, charWidth: 7, wrapColumns: 80, cursor: 0)
+            let r = Monaco.rects(text: "가나 abc", range: ("가나 abc" as NSString).range(of: "abc"), g)
+            print("wide chars \(r.first?.minX == 10 + 5 * 7 ? "OK" : "FAIL"): a word after Hangul is placed after their double width")
+            let (x0, _) = TextMarkers.proportionalSpan("가나ab", NSRange(location: 2, length: 2), width: 100)
+            print("wide chars \(x0 > 55 ? "OK" : "FAIL"): text-run placement measures widths (\(Int(x0)) of 100, not 50)")
+            print("live check \(LiveChecker.worthChecking("我明天再来找你") && !LiveChecker.worthChecking("ok go") ? "OK" : "FAIL"): Chinese without spaces is checked; two words aren't")
+            let st = Settings.shared, saved = (st.persist, st.writingLanguages, st.checkOtherLanguages)
+            st.persist = false; st.writingLanguages = ["en"]; st.checkOtherLanguages = false
+            let ok = Lang.isChecked("en") && !Lang.isChecked("ko") && !Lang.isChecked("xx") && Lang.isChecked(nil)
+            st.writingLanguages = saved.1; st.checkOtherLanguages = saved.2; st.persist = saved.0
+            print("languages \(ok ? "OK" : "FAIL"): Settings → Languages decides what live checking checks")
+            let note = { () -> String in Gemini.languageAware = true; return Gemini.languageNote("ko") }()
+            print("languages \(note.contains("Korean (ko)") && note.contains("띄어쓰기") && !Gemini.languageNote("de").contains("Korean") ? "OK" : "FAIL"): the language line and only that language's rules are added")
+        }
+
+        // Oversized fixes are narrowed to what changes (shapes seen from Qwen, Gemini and DeepSeek).
+        do {
+            func T(_ a: String, _ b: String, _ text: String) -> [String] { Gemini.tighten(a, b, in: text).map { "\($0.0)→\($0.1)" } }
+            let zh = T("在来", "我明天再来找你，好吗？", "我明天在来找你，好吗？")
+            print("tighten \(zh == ["在→再"] ? "OK" : "FAIL"): a whole-sentence fix for a short span becomes the one changed character (\(zh))")
+            let en = T("They was late and he dont know why.", "They were late and he doesn't know why.", "They was late and he dont know why.")
+            print("tighten \(en == ["was→were", "dont→doesn't"] ? "OK" : "FAIL"): a sentence-wide fix splits into one issue per change (\(en))")
+            let ko = T("공부할수 있어요", "공부할 수 있어요", "저는 한국어를 공부할수 있어요.")
+            print("tighten \(ko == ["할수→할 수"] ? "OK" : "FAIL"): a Korean spacing fix keeps both neighbours (\(ko))")
+            let same = T("They was", "They were", "They was late.")
+            print("tighten \(same == ["was→were"] ? "OK" : "FAIL"): a normal fix stays minimal (\(same))")
+            let word = T("dont", "doesn't", "he dont know")
+            print("tighten \(word == ["dont→doesn't"] ? "OK" : "FAIL"): an English word is never cut inside (\(word))")
+            let ins = T("I need advice", "I need some advice", "I need advice now.")
+            print("tighten \(ins == ["need→need some"] ? "OK" : "FAIL"): an insertion is anchored on the word before (\(ins))")
+            func applied(_ a: String, _ b: String, _ text: String) -> String {
+                Gemini.tighten(a, b, in: text).reduce(text) { t, p in
+                    let r = (t as NSString).range(of: p.0); return r.location == NSNotFound ? t : (t as NSString).replacingCharacters(in: r, with: p.1)
+                }
+            }
+            let twice = applied("a cat and a dog", "a cat and the dog", "a cat and a dog")
+            print("tighten \(twice == "a cat and the dog" ? "OK" : "FAIL"): the second of two equal words is changed, not the first (\(twice))")
+            let uniq = T("我在家，明天在来", "我在家，明天再来", "我在家，明天在来")
+            print("tighten \(applied("我在家，明天在来", "我在家，明天再来", "我在家，明天在来") == "我在家，明天再来" ? "OK" : "FAIL"): a span that occurs twice is widened until unique (\(uniq))")
         }
 
         // Overlapping issues become one suggestion.

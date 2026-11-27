@@ -231,7 +231,7 @@ enum AI {
 
     /// A tiny request that proves key, model and endpoint work.
     static func test(_ ep: AIEndpoint) async throws {
-        _ = try await complete(AIRequest(system: "Reply with the single word OK.", user: "ping", temperature: 0, maxTokens: 64, timeout: 20, feature: .test), ep)
+        _ = try await complete(AIRequest(system: "Reply with the single word OK.", user: "ping", temperature: 0, maxTokens: 1024, timeout: 30, feature: .test), ep)
     }
 
     static func listModels(_ ep: AIEndpoint) async throws -> [String] {
@@ -458,9 +458,21 @@ enum AI {
 
     /// Sends, and when the provider rejects (400) a parameter Nib chose (e.g. a reasoning level a model
     /// doesn't accept), adjusts that parameter and tries again. At most one adjustment per parameter.
+    /// Parameters each endpoint+model rejected (in the order they were adjusted), for this run of the app.
+    private static var learned: [String: [String]] = [:]
+    private static let learnedLock = NSLock()
+
     private static func sendWithRetry(url: String, body: inout [String: Any], headers: [String: String], timeout: TimeInterval,
                                       droppable: [(String, (inout [String: Any]) -> Void)]) async throws -> [String: Any] {
         var adjusted = Set<String>()
+        // What this endpoint and model rejected before is adjusted up front, so each call costs one request.
+        let key = url + "|" + (body["model"] as? String ?? "")
+        learnedLock.lock(); let known = learned[key] ?? []; learnedLock.unlock()
+        for name in known {
+            guard let (_, fix) = droppable.first(where: { $0.0 == name }) else { continue }
+            fix(&body)
+            if !(name == "reasoning_effort" && body["reasoning_effort"] != nil) { adjusted.insert(name) }
+        }
         while true {
             do {
                 return try await send(url: url, method: "POST", body: body, headers: headers, timeout: timeout)
@@ -471,9 +483,12 @@ enum AI {
                         ?? droppable.first(where: { !adjusted.contains($0.0) && $0.0 == "thinkingConfig" && m.contains("thinking") })
                 else { throw AIError.http(code, msg) }
                 // "minimal" → "low" is a second step for reasoning_effort only.
-                if name == "reasoning_effort", body["reasoning_effort"] as? String == "minimal" { fix(&body); continue }
+                if name == "reasoning_effort", body["reasoning_effort"] as? String == "minimal" {
+                    fix(&body); learnedLock.lock(); learned[key, default: []].append(name); learnedLock.unlock(); continue
+                }
                 adjusted.insert(name)
                 fix(&body)
+                learnedLock.lock(); learned[key, default: []].append(name); learnedLock.unlock()
                 log("ai: \(name) not accepted by this model; adjusted and retried")
             }
         }
