@@ -3,8 +3,8 @@
 # the Accessibility grant across rebuilds (ad-hoc signatures change every build).
 set -euo pipefail
 cd "$(dirname "$0")"
-VERSION=${VERSION:-2.2.0}
-BUILD_NUMBER=${BUILD_NUMBER:-25}
+VERSION=${VERSION:-2.2.1}
+BUILD_NUMBER=${BUILD_NUMBER:-26}
 
 swift build -c release
 BIN="$(swift build -c release --show-bin-path)/GrammarAI"

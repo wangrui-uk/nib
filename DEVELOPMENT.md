@@ -70,6 +70,10 @@ Safety checks: nothing is pasted if you switched apps or edited the field meanwh
 | `--e2e DIR --attach [--prep-editor] [--scroll-test] [--apply]` | Tests whatever field is in front (used for VS Code) |
 | `--ai-check <provider> [--model M] [--key K]` | Checks a provider/key/model from the command line without changing settings |
 
+## Prompt evaluation
+
+`Evals/` holds synthetic test cases and candidate prompts; `Nib --eval Evals …` runs the real request code on them and writes a markdown + JSON report. See [Evals/README.md](Evals/README.md). Change a prompt only with a dev-split improvement and no new must-not-change violations, and check the held-out split before shipping.
+
 ## Releases
 
 `release.sh` builds, signs with **your** Developer ID (hardened runtime), notarises and staples the app and the DMG, and checks them with Gatekeeper. Configure it with `DEVELOPER_ID` and `NOTARY_PROFILE` (environment, or a git-ignored `release.local.env`). `./release.sh --publish` also creates the GitHub release, uploads the DMG, and adds the update to the Sparkle appcast (`docs/appcast.xml`, signed with the EdDSA key in your Keychain).

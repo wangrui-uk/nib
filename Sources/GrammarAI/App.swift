@@ -642,6 +642,18 @@ enum Main {
         if args.count > 1 && args[1].hasPrefix("--") && !args.contains("--e2e") && !args.contains("--relaunched-for-accessibility") {
             Keychain.migrate = false
         }
+        if let i = args.firstIndex(of: "--eval-merge"), i + 2 < args.count {
+            Eval.merge(run: URL(fileURLWithPath: args[i + 1]), verdicts: URL(fileURLWithPath: args[i + 2]),
+                       judgeName: args.firstIndex(of: "--judge-name").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } ?? "judge")
+            exit(0)
+        }
+        if args.contains("--eval") {
+            setvbuf(stdout, nil, _IONBF, 0)
+            let sem = DispatchSemaphore(value: 0)
+            Task.detached { await Eval.run(args); sem.signal() }
+            sem.wait()
+            exit(0)
+        }
         if let i = args.firstIndex(of: "--ai-check"), i + 1 < args.count, let p = Provider(rawValue: args[i + 1]) {
             // Checks a provider without touching the saved settings: connection, model list, structured output.
             func opt(_ n: String) -> String? { args.firstIndex(of: n).flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } }
@@ -960,6 +972,49 @@ enum DiffSelfTest {
             for _ in 0..<1005 { u.add(.test, provider: "Gemini", model: "m1", d, at: now) }
             let csv = u.csv().split(separator: "\n")
             print("usage \(csv.count == 1001 && csv[0].hasPrefix("time,feature,provider,model") ? "OK" : "FAIL"): the last 1,000 calls kept; CSV header and rows (\(csv.count - 1) rows)")
+        }
+
+        // Prompt-eval scoring: span extent doesn't matter, alternatives count, false flags and violations.
+        do {
+            typealias E = Eval.ExpectedIssue
+            func pc(_ text: String, _ issues: [E], mustNotChange: Bool = false, protected: [String] = []) -> Eval.ProofCase {
+                Eval.ProofCase(id: "t", split: "dev", category: "t", text: text, issues: issues, protected: protected, mustNotChange: mustNotChange)
+            }
+            let c1 = pc("They was waiting outside.", [E(span: "was", fixes: ["were"], kind: "grammar")])
+            let a = Eval.score(c1, issues: [Issue(kind: "grammar", text: "They was", fix: "They were", reason: "")])
+            let b = Eval.score(c1, issues: [Issue(kind: "grammar", text: "was", fix: "is", reason: "")])
+            print("eval scoring \(a.fixed == 1 && a.falseFlags == 0 && b.found == 1 && b.fixed == 0 ? "OK" : "FAIL"): a wider span with the right fix counts; a wrong fix doesn't")
+            let c2 = pc("Can you send it by Friday.", [E(span: "Friday.", fixes: ["Friday?"], kind: "grammar", alts: [.init(span: ".", fix: "?")])])
+            let d = Eval.score(c2, issues: [Issue(kind: "grammar", text: ".", fix: "?", reason: "")])
+            print("eval scoring \(d.fixed == 1 ? "OK" : "FAIL"): an alternative span and fix count")
+            let c3 = pc("See https://example.com today.", [], mustNotChange: true, protected: ["https://example.com"])
+            let f = Eval.score(c3, issues: [Issue(kind: "spelling", text: "https://example.com", fix: "https://example.org", reason: "")])
+            print("eval scoring \(f.falseFlags == 1 && f.violations == 2 ? "OK" : "FAIL"): a flag on must-not-change text touching a protected part is a violation")
+        }
+
+        // Spans are found as whole words first; code-like spans are guarded; `code` in ⌥⌥ output is restored.
+        do {
+            let ns = "Ich habe gestern ein Auto gekauft und er ist schnell." as NSString
+            print("spans \(Gemini.spanRange("er", in: ns).location == ns.range(of: " er ").location + 1 ? "OK" : "FAIL"): “er” is found as a word, not inside “gestern”")
+            let t = "Check README.md and recieve_data() in utils.py, see https://example.com or ask @maria in #dev. Then end.Next" as NSString
+            let code = ["recieve_data()", "README.md", "utils.py", "https://example.com", "@maria", "#dev"].allSatisfy { Gemini.looksLikeCode($0, in: t) }
+            let prose = ["Check", "end.Next", "ask"].allSatisfy { !Gemini.looksLikeCode($0, in: t) }
+            print("code guard \(code && prose ? "OK" : "FAIL"): identifiers, files, URLs, mentions guarded; prose (and a missing space) not")
+            let inTicks = "Run `git pul` now" as NSString
+            print("code guard \(Gemini.looksLikeCode("pul", in: inTicks) ? "OK" : "FAIL"): a word inside backticks is guarded")
+            let restored = Gemini.restoringCode("Run `git pull` and then restart.", original: "Run `git pul` and then restart.")
+            print("code guard \(restored == "Run `git pul` and then restart." ? "OK" : "FAIL"): ⌥⌥ puts `code` back as it was")
+        }
+
+        // Built-in styles saved with an earlier (unedited) text get the current one; edited ones are kept.
+        do {
+            let old = RewriteStyles.previousInstructions["apology"]![0]
+            let saved = [RewriteStyle(id: "apology", name: "Apology", instruction: old, builtIn: true),
+                         RewriteStyle(id: "sales", name: "Sales & outreach", instruction: "My own sales text", builtIn: true)]
+            let loaded = RewriteStyles.load(from: RewriteStyles.encode(saved))
+            let apology = loaded.first { $0.id == "apology" }!.instruction, sales = loaded.first { $0.id == "sales" }!.instruction
+            let ok = apology == RewriteStyles.builtIns.first { $0.id == "apology" }!.instruction && apology != old && sales == "My own sales text"
+            print("rewrite styles \(ok ? "OK" : "FAIL"): unedited built-in styles get the improved text; edited ones are kept")
         }
 
         // Overlapping issues become one suggestion.

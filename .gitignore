@@ -27,3 +27,6 @@ dist/
 
 # Local signing settings (identity, notary profile)
 release.local.env
+
+# Eval run output (reports go outside the repo by default)
+Evals/results/

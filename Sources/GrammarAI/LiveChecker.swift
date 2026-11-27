@@ -185,7 +185,7 @@ final class LiveChecker {
             guard let issues = cache[p.text] ?? carry[p.text] else { continue }
             var used: [NSRange] = []
             for issue in issues where !dismissed.contains(issue.key) {
-                let r = (p.text as NSString).range(of: issue.text)
+                let r = Gemini.spanRange(issue.text, in: p.text as NSString)
                 guard r.location != NSNotFound else { continue }
                 let abs = NSRange(location: p.range.location + r.location, length: r.length)
                 guard !used.contains(where: { NSIntersectionRange($0, abs).length > 0 }) else { continue }

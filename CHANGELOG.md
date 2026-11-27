@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.1
+
+- **Better prompts, measured.** A new evaluation set (synthetic only, in `Evals/`) and harness (`Nib --eval`) compared the old and new instructions on held-out cases. Rewrites no longer invent details, change numbers ("40k" → "$40,000"), or follow instructions hidden in the text; the "Confident", "Sales", "Apology", "Feedback" and "Complaint" styles no longer ask for things the text doesn't contain. Held-out rewrite pass rate 2/7 → 6/7; live-checking accuracy unchanged at 100%, with about 40% fewer input tokens per check.
+- Code is never "corrected": identifiers, file names, URLs, e-mails, @mentions, #channels and anything in backticks are left alone by live checking, and ⌥⌥ puts `code` back exactly as it was.
+- Fixed: an underline could be placed inside another word when the mistake was a short word that also appears inside an earlier one ("er" in "gestern").
+
 ## 2.2.0
 
 - **Usage statistics** (Settings → Usage): calls and tokens (input, output and thinking, counted separately) for today, 7 days or 30 days, split by feature (live checking, correct, rewrite, test connection) and by model when there's more than one. Calls whose provider didn't report tokens are counted and marked. **Export CSV…** and **Reset Statistics…**. Optional menu line: "Today: N calls · X tokens".
