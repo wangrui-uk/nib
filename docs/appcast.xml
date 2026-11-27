@@ -7,6 +7,15 @@
     <language>en</language>
     <!-- items -->
     <item>
+      <title>Nib 2.2.0</title>
+      <pubDate>Fri, 27 Nov 2026 17:02:35 GMT</pubDate>
+      <sparkle:version>25</sparkle:version>
+      <sparkle:shortVersionString>2.2.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[<ul><li><b>Usage statistics</b> (Settings → Usage): calls and tokens (input, output and thinking, counted separately) for today, 7 days or 30 days, split by feature (live checking, correct, rewrite, test connection) and by model when there&#x27;s more than one. Calls whose provider didn&#x27;t report tokens are counted and marked. <b>Export CSV…</b> and <b>Reset Statistics…</b>. Optional menu line: &quot;Today: N calls · X tokens&quot;.</li><li>Stored only on your Mac (the last 1,000 calls and 90 days of daily totals), with no text ever and nothing sent anywhere.</li><li>Fixed: the &quot;No API key&quot; message could name the wrong provider.</li></ul>]]></description>
+      <enclosure url="https://github.com/wangrui-uk/nib/releases/download/v2.2.0/Nib-2.2.0.dmg" sparkle:edSignature="BsqTiO9D7freNCuFGZ7jRyKJJW22Ng0LG2Ks0U99uRtNlzn3ROM9TwHfftYGiuBhzTrorVbQ2KiL3ryqgX1BCQ==" length="2849854" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>Nib 2.1.0</title>
       <pubDate>Fri, 27 Nov 2026 09:02:01 GMT</pubDate>
       <sparkle:version>24</sparkle:version>
