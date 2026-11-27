@@ -638,7 +638,7 @@ enum Main {
             Settings.shared.pausedUntil = nil
             SystemTextChecking.disabled = true
             Settings.shared.privacyConsent = true
-            Settings.shared.writingLanguages = ["en", "zh", "ko"] // test copies check every test language (in memory)
+            Settings.shared.writingLanguages = Lang.offered // test copies check every language (in memory)
         }
         if args.count > 1 && args[1].hasPrefix("--") && !args.contains("--e2e") && !args.contains("--relaunched-for-accessibility") {
             Keychain.migrate = false
@@ -1075,6 +1075,10 @@ enum DiffSelfTest {
             let ok = Lang.isChecked("en") && !Lang.isChecked("ko") && !Lang.isChecked("xx") && Lang.isChecked(nil)
             st.writingLanguages = saved.1; st.checkOtherLanguages = saved.2; st.persist = saved.0
             print("languages \(ok ? "OK" : "FAIL"): Settings → Languages decides what live checking checks")
+            let defaultsAll = Settings.defaultWritingLanguages() == Lang.offered && ["en", "zh", "ko", "ja"].allSatisfy { Lang.offered.contains($0) }
+            print("languages \(defaultsAll ? "OK" : "FAIL"): opt-out: every language is checked by default")
+            let hintsOK = Settings.preferredLanguageHints().contains("en")
+            print("languages \(hintsOK ? "OK" : "FAIL"): the Mac's languages are only detection hints")
             let note = { () -> String in Gemini.languageAware = true; return Gemini.languageNote("ko") }()
             print("languages \(note.contains("Korean (ko)") && note.contains("띄어쓰기") && !Gemini.languageNote("de").contains("Korean") ? "OK" : "FAIL"): the language line and only that language's rules are added")
         }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.3
+
+- **Every language is checked by default.** Settings → Languages to check is now opt-out: all languages start ticked, and you untick the ones you don't want checked as you type. Your Mac's language list is only used as a hint when a short piece of text is hard to identify; it never causes a language to be skipped. (In 2.2.2 the default followed the Mac's languages, so Korean wasn't checked on a Mac without Korean in its list.) If you never changed the list, you get the new default automatically; a list you changed is kept.
+
 ## 2.2.2
 
 - **Chinese and Korean.** Each paragraph's language is detected on your Mac, and the AI is told the language and its rules: for Chinese, wrong characters (在/再, 的/得/地…), measure words, full-width punctuation, and Simplified or Traditional kept as written; for Korean, spacing (띄어쓰기), spelling, particles, and the speech level and honorifics kept as written. Casual chat and mixed Chinese/Korean–English text are left alone. On the held-out evaluation, Chinese fix accuracy rose from 3/5 to 5/5, with English and Korean at 100%.

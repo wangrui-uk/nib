@@ -183,9 +183,9 @@ struct SettingsView: View {
                 }
                 Toggle("Other languages", isOn: $settings.checkOtherLanguages)
             } header: {
-                Text("Languages I write in")
+                Text("Languages to check")
             } footer: {
-                Text("Live checking detects each paragraph's language on your Mac and checks it by that language's rules. Text in a language you turn off here isn't checked as you type (⌥⌥ and rewrites still work on it).")
+                Text("All languages are checked. Live checking detects each paragraph's language on your Mac and checks it by that language's rules; untick a language you don't want checked as you type (⌥⌥ and rewrites still work on it).")
                     .font(.caption).foregroundColor(.secondary)
             }
 

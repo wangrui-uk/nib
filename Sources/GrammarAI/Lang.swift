@@ -21,7 +21,10 @@ enum Lang {
 
     /// Detects a paragraph's language. Short or uncertain text falls back to `previous` (the paragraph before), then
     /// to the user's first writing language. `hints` weight the recognizer towards the user's languages.
-    static func detect(_ text: String, previous: String? = nil, hints: [String] = Settings.shared.writingLanguages) -> String? {
+    /// Detection hints (`--eval` fixes them so runs don't depend on this Mac).
+    static var hintsOverride: [String]?
+
+    static func detect(_ text: String, previous: String? = nil, hints: [String] = Lang.hintsOverride ?? Settings.preferredLanguageHints()) -> String? {
         let letters = text.unicodeScalars.filter { CharacterSet.letters.contains($0) }.count
         // CJK carries a lot per character: 4 Han/Hangul characters are as telling as ~12 Latin letters.
         let cjk = text.unicodeScalars.contains { isWide($0) }

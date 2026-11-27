@@ -83,7 +83,8 @@ final class Settings: ObservableObject {
     @Published var liveChecking: Bool { didSet { guard persist else { return }; defaults.set(liveChecking, forKey: "liveChecking") } }
     /// The user read the privacy notice and allowed live checking (asked before it first runs).
     @Published var privacyConsent: Bool { didSet { guard persist else { return }; defaults.set(privacyConsent, forKey: "privacyConsent") } }
-    /// Languages the user writes in (base codes); live checking skips the others it knows (Settings → Languages).
+    /// Languages live checking checks (base codes). Opt-out: all are on unless the user unticks one in
+    /// Settings → Languages. (A list never changed isn't stored, so it follows this default.)
     @Published var writingLanguages: [String] { didSet { guard persist else { return }; defaults.set(writingLanguages, forKey: "writingLanguages") } }
     /// Whether text in languages not listed in Settings → Languages is checked.
     @Published var checkOtherLanguages: Bool { didSet { guard persist else { return }; defaults.set(checkOtherLanguages, forKey: "checkOtherLanguages") } }
@@ -92,9 +93,13 @@ final class Settings: ObservableObject {
     /// Bundle ids where live checking is off.
     @Published var liveDisabledApps: [String] { didSet { guard persist else { return }; defaults.set(liveDisabledApps, forKey: "liveDisabledApps") } }
 
-    static func defaultWritingLanguages() -> [String] {
-        var out = ["en"]
+    static func defaultWritingLanguages() -> [String] { Lang.offered }
+
+    /// The Mac's preferred languages: only hints for detecting short or uncertain text, never a reason to skip one.
+    static func preferredLanguageHints() -> [String] {
+        var out: [String] = []
         for l in Locale.preferredLanguages { let b = Lang.base(l); if !out.contains(b) { out.append(b) } }
+        if !out.contains("en") { out.append("en") }
         return out
     }
 
@@ -140,7 +145,7 @@ final class Settings: ObservableObject {
         liveChecking = defaults.object(forKey: "liveChecking") as? Bool ?? true
         privacyConsent = defaults.bool(forKey: "privacyConsent")
         showUsageInMenu = defaults.bool(forKey: "showUsageInMenu")
-        // Default: English plus the Mac's preferred languages.
+        // Default: every language (opt-out).
         writingLanguages = defaults.stringArray(forKey: "writingLanguages") ?? Settings.defaultWritingLanguages()
         checkOtherLanguages = defaults.object(forKey: "checkOtherLanguages") as? Bool ?? true
         liveDisabledApps = defaults.stringArray(forKey: "liveDisabledApps") ?? []

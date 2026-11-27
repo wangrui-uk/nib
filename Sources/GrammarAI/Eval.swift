@@ -122,7 +122,8 @@ enum Eval {
         Gemini.languageAware = prompts == "builtin" || FileManager.default.fileExists(atPath: pdir.appendingPathComponent("language-aware").path)
         Lang.blockOverrides = (try? Data(contentsOf: pdir.appendingPathComponent("languages.json")))
             .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: String] }
-        s.writingLanguages = ["en", "zh", "ko"] // fixed hints, so runs don't depend on this Mac's settings
+        Lang.hintsOverride = ["en", "zh", "ko"] // fixed hints, so runs don't depend on this Mac's languages
+        s.writingLanguages = Lang.offered
         Gemini.guards = prompts == "builtin" || FileManager.default.fileExists(atPath: dir.appendingPathComponent("prompts/\(prompts)/guards").path)
         Gemini.rewriteSeedOverride = 7
 
