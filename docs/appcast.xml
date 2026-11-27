@@ -6,5 +6,14 @@
     <description>Updates for Nib. Each update is EdDSA-signed and notarised by Apple.</description>
     <language>en</language>
     <!-- items -->
+    <item>
+      <title>Nib 2.1.0</title>
+      <pubDate>Fri, 27 Nov 2026 09:02:01 GMT</pubDate>
+      <sparkle:version>24</sparkle:version>
+      <sparkle:shortVersionString>2.1.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[<ul><li><b>Privacy notice and consent.</b> The setup guide and Settings → Privacy say exactly what is sent where: your text goes to the provider you chose, with your key, and live checking sends paragraphs as you type. Live checking doesn&#x27;t start until you confirm.</li><li><b>Automatic updates</b> (Sparkle, EdDSA-signed). Nib checks for updates automatically; you can turn this off in Settings. <b>Check for Updates…</b> is in the menu.</li><li>First public, open-source release (MIT).</li></ul>]]></description>
+      <enclosure url="https://github.com/wangrui-uk/nib/releases/download/v2.1.0/Nib-2.1.0.dmg" sparkle:edSignature="eHWX0dnZ6QEgCRI90pzNPslqCsvVBpDyhoCjq9gcX2XUxQlMocnZ1LoP95j3WgZs2CikkekEkNryloSiGSM8DQ==" length="2797378" type="application/octet-stream"/>
+    </item>
   </channel>
 </rss>

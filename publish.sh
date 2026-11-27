@@ -67,7 +67,6 @@ item = f"""    <item>
       <sparkle:version>{build}</sparkle:version>
       <sparkle:shortVersionString>{version}</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-      <sparkle:releaseNotesLink>https://github.com/{url.split('/')[3]}/{url.split('/')[4]}/releases/tag/v{version}</sparkle:releaseNotesLink>
       <description><![CDATA[<ul>{items}</ul>]]></description>
       <enclosure url="{url}" {sig} type="application/octet-stream"/>
     </item>
