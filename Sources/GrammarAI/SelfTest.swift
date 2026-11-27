@@ -206,6 +206,16 @@ enum UIRender {
         app.run()
     }
 
+    /// Made-up usage in memory (never the user's file).
+    static func sampleUsage() -> Usage {
+        let u = Usage(url: nil)
+        for i in 0..<38 { u.add(.live, provider: "Gemini (AI Studio)", model: "gemini-3.5-flash-lite", TokenUsage(input: 700 + i * 9, output: 60 + i, thinking: nil)) }
+        for _ in 0..<6 { u.add(.correct, provider: "Gemini (AI Studio)", model: "gemini-3.5-flash-lite", TokenUsage(input: 420, output: 380, thinking: nil)) }
+        for _ in 0..<3 { u.add(.rewrite, provider: "Claude (Anthropic)", model: "claude-haiku-5-5", TokenUsage(input: 610, output: 240, thinking: nil)) }
+        u.add(.test, provider: "Custom (OpenAI-compatible)", model: "llama3", TokenUsage())
+        return u
+    }
+
     static func family() -> some View {
         HStack(alignment: .top, spacing: 0) {
             LivePreview.popup(total: 3)
@@ -242,6 +252,8 @@ enum UIRender {
                 RewriteStylesEditor(settings: Settings.shared)
             } }.formStyle(.grouped).frame(width: 480, height: 200))),
             ("chip-dark", AnyView(ChipView {})),
+            ("settings-usage-light", AnyView(Form { UsageSection(usage: UIRender.sampleUsage()) }.formStyle(.grouped).frame(width: 480).fixedSize(horizontal: false, vertical: true))),
+            ("settings-usage-dark", AnyView(Form { UsageSection(usage: UIRender.sampleUsage()) }.formStyle(.grouped).frame(width: 480).fixedSize(horizontal: false, vertical: true))),
             ("family-dark", AnyView(UIRender.family())),
             ("family-light", AnyView(UIRender.family())),
             ("live-popup-example-light", AnyView(LivePreview.popupWithExample())),

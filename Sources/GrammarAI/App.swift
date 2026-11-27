@@ -73,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         Updates.shared.start()
+        Usage.shared.recording = Settings.shared.persist // local statistics: normal launches only
         // Existing users updating to 2.1: ask once for the OK before live checking runs. (New users get the same
         // notice as a step of the setup guide.)
         let st = Settings.shared
@@ -262,6 +263,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(item("Live checking needs your OK — Review…", #selector(askConsent)))
         }
         if !hotKeyOK { menu.addItem(item("⚠︎ \(s.hotKeyDisplay) is taken — change it in Settings", #selector(openSettings))) }
+        if s.showUsageInMenu {
+            let u = Usage.shared.summary(days: 1)
+            menu.addItem(item("Today: \(u.calls) call\(u.calls == 1 ? "" : "s") · \(Usage.short(u.tokens)) tokens", #selector(openSettings)))
+        }
         menu.addItem(.separator())
 
         menu.addItem(item("Correct Now\t\(s.triggerDisplay)", #selector(correctFromMenu), enabled: !busy && status == .ready && !s.isPaused))
@@ -649,7 +654,12 @@ enum Main {
             let sem = DispatchSemaphore(value: 0)
             Task.detached {
                 let t0 = Date()
-                do { try await AI.test(ep); print("[\(p.rawValue)] test connection: OK (\(ep.model), \(String(format: "%.2f", Date().timeIntervalSince(t0)))s)") }
+                do {
+                    try await AI.test(ep)
+                    let u = Usage.lastParsed
+                    let tok = u.map { $0.reported ? "tokens \($0.input ?? 0) in / \($0.output ?? 0) out\($0.thinking.map { " / \($0) thinking" } ?? "")" : "tokens not reported" } ?? "no usage parsed"
+                    print("[\(p.rawValue)] test connection: OK (\(ep.model), \(String(format: "%.2f", Date().timeIntervalSince(t0)))s, \(tok))")
+                }
                 catch { print("[\(p.rawValue)] test connection: Not working: \(error.localizedDescription)") }
                 do { let m = try await AI.listModels(ep); print("[\(p.rawValue)] load models: \(m.count) — \(m.prefix(6).joined(separator: ", "))\(m.count > 6 ? ", …" : "")") }
                 catch { print("[\(p.rawValue)] load models: Not working: \(error.localizedDescription)") }
@@ -922,6 +932,34 @@ enum DiffSelfTest {
             let n = Consent.notice(.claude)
             let ok = n.contains("Claude (Anthropic)") && n.contains("paragraphs as you type") && n.contains("never contains your text")
             print("privacy \(ok ? "OK" : "FAIL"): the notice names the provider and what live checking sends")
+        }
+
+        // Usage statistics: each provider's usage format, missing usage, totals, the 1,000-call cap.
+        do {
+            let g = UsageParse.gemini(["usageMetadata": ["promptTokenCount": 812, "candidatesTokenCount": 64, "thoughtsTokenCount": 30, "totalTokenCount": 906]])
+            print("usage \(g == TokenUsage(input: 812, output: 64, thinking: 30) ? "OK" : "FAIL"): Gemini usageMetadata (thoughts counted separately)")
+            let a = UsageParse.anthropic(["usage": ["input_tokens": 500, "cache_read_input_tokens": 100, "output_tokens": 42]])
+            print("usage \(a == TokenUsage(input: 600, output: 42, thinking: nil) ? "OK" : "FAIL"): Anthropic usage (cache reads count as input)")
+            let o = UsageParse.openAI(["usage": ["prompt_tokens": 300, "completion_tokens": 120, "completion_tokens_details": ["reasoning_tokens": 100]]])
+            print("usage \(o == TokenUsage(input: 300, output: 20, thinking: 100) ? "OK" : "FAIL"): OpenAI usage (reasoning taken out of completion)")
+            let d = UsageParse.openAI(["usage": ["prompt_tokens": 50, "completion_tokens": 9]])
+            print("usage \(d == TokenUsage(input: 50, output: 9, thinking: nil) ? "OK" : "FAIL"): OpenAI-compatible usage without reasoning details")
+            let none = UsageParse.openAI(["choices": []])
+            print("usage \(!none.reported && UsageParse.gemini([:]) == TokenUsage() ? "OK" : "FAIL"): missing usage → not reported")
+
+            let u = Usage(url: nil)
+            let now = Date()
+            u.add(.live, provider: "Gemini", model: "m1", g, at: now)
+            u.add(.correct, provider: "Gemini", model: "m1", none, at: now)
+            u.add(.rewrite, provider: "Claude", model: "m2", a, at: Calendar.current.date(byAdding: .day, value: -3, to: now)!)
+            u.add(.live, provider: "Gemini", model: "m1", d, at: Calendar.current.date(byAdding: .day, value: -20, to: now)!)
+            let t = u.summary(days: 1, now: now), w = u.summary(days: 7, now: now), m = u.summary(days: 30, now: now)
+            let ok = t.calls == 2 && t.unreported == 1 && t.input == 812 && t.thinking == 30 && w.calls == 3 && w.byModel.count == 2
+                && m.calls == 4 && m.byFeature.first(where: { $0.0 == .live })?.1 == 2
+            print("usage \(ok ? "OK" : "FAIL"): today / 7 days / 30 days totals, by feature and by model")
+            for _ in 0..<1005 { u.add(.test, provider: "Gemini", model: "m1", d, at: now) }
+            let csv = u.csv().split(separator: "\n")
+            print("usage \(csv.count == 1001 && csv[0].hasPrefix("time,feature,provider,model") ? "OK" : "FAIL"): the last 1,000 calls kept; CSV header and rows (\(csv.count - 1) rows)")
         }
 
         // Overlapping issues become one suggestion.

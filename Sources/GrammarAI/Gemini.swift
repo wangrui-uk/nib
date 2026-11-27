@@ -18,7 +18,7 @@ enum Gemini {
         if !extra.isEmpty {
             instruction += "\n\nAdditional instruction from the user (still return only the corrected text): \(extra)"
         }
-        let out = try await AI.complete(AIRequest(system: instruction, user: text, temperature: 0.1), endpoint ?? .active())
+        let out = try await AI.complete(AIRequest(system: instruction, user: text, temperature: 0.1, feature: .correct), endpoint ?? .active())
         return clean(out, original: text)
     }
 

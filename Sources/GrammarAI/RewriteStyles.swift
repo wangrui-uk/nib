@@ -75,7 +75,7 @@ extension Gemini {
     static func rewrite(_ text: String, style: RewriteStyle, attempt: Int = 0) async throws -> String {
         let out = try await AI.complete(AIRequest(system: rewriteInstruction(style), user: text,
                                                   temperature: min(0.5 + 0.2 * Double(attempt), 1.0),
-                                                  seed: Int.random(in: 1...1_000_000)))
+                                                  seed: Int.random(in: 1...1_000_000), feature: .rewrite))
         return clean(out, original: text)
     }
 }

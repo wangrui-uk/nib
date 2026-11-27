@@ -172,6 +172,8 @@ struct SettingsView: View {
                 }
             }
 
+            UsageSection()
+
             Section("Privacy") {
                 Text(Consent.notice()).font(.callout).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
                 if settings.privacyConsent {

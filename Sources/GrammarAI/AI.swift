@@ -133,7 +133,7 @@ enum AIError: LocalizedError {
     func describe(_ p: Provider) -> String {
         let provider = p.shortName
         switch self {
-        case .noKey: return "No API key for \(Settings.shared.provider.name). Open Settings… to add one."
+        case .noKey: return "No API key for \(p.name). Open Settings… to add one."
         case .notSetUp(let what): return what
         case .credentials(let why): return why
         case .http(let code, let msg):
@@ -196,6 +196,8 @@ struct AIRequest {
     var seed: Int? = nil
     var maxTokens = 4096
     var timeout: TimeInterval = 30
+    /// For the local usage statistics.
+    var feature: UsageFeature = .other
 }
 
 /// Everything needed to talk to one provider (the active one, or one being tested in Settings).
@@ -229,7 +231,7 @@ enum AI {
 
     /// A tiny request that proves key, model and endpoint work.
     static func test(_ ep: AIEndpoint) async throws {
-        _ = try await complete(AIRequest(system: "Reply with the single word OK.", user: "ping", temperature: 0, maxTokens: 64, timeout: 20), ep)
+        _ = try await complete(AIRequest(system: "Reply with the single word OK.", user: "ping", temperature: 0, maxTokens: 64, timeout: 20, feature: .test), ep)
     }
 
     static func listModels(_ ep: AIEndpoint) async throws -> [String] {
@@ -325,6 +327,7 @@ enum AI {
             ("seed", { b in Self.dropGen(&b, "seed") }),
             ("responseSchema", { b in Self.dropGen(&b, "responseSchema") }),
         ])
+        Usage.shared.record(r.feature, provider: ep.provider, model: ep.model, UsageParse.gemini(json))
         let candidates = json["candidates"] as? [[String: Any]]
         if let reason = candidates?.first?["finishReason"] as? String, reason != "STOP" { throw AIError.incomplete(reason) }
         let parts = (candidates?.first?["content"] as? [String: Any])?["parts"] as? [[String: Any]] ?? []
@@ -358,6 +361,7 @@ enum AI {
         let json = try await sendWithRetry(url: ep.provider.baseURL(ep.settings) + "/v1/messages", body: &body,
                                            headers: try await authHeaders(ep), timeout: r.timeout,
                                            droppable: [("temperature", { $0.removeValue(forKey: "temperature") })])
+        Usage.shared.record(r.feature, provider: ep.provider, model: ep.model, UsageParse.anthropic(json))
         let content = json["content"] as? [[String: Any]] ?? []
         if r.schema != nil, let input = content.first(where: { $0["type"] as? String == "tool_use" })?["input"],
            let data = try? JSONSerialization.data(withJSONObject: input), let s = String(data: data, encoding: .utf8) {
@@ -416,6 +420,7 @@ enum AI {
                 }
             }),
         ])
+        Usage.shared.record(r.feature, provider: ep.provider, model: ep.model, UsageParse.openAI(json))
         let choice = (json["choices"] as? [[String: Any]])?.first
         if let reason = choice?["finish_reason"] as? String, reason == "length" { throw AIError.incomplete("length") }
         let out = ((choice?["message"] as? [String: Any])?["content"] as? String) ?? ""

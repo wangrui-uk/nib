@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.0
+
+- **Usage statistics** (Settings → Usage): calls and tokens (input, output and thinking, counted separately) for today, 7 days or 30 days, split by feature (live checking, correct, rewrite, test connection) and by model when there's more than one. Calls whose provider didn't report tokens are counted and marked. **Export CSV…** and **Reset Statistics…**. Optional menu line: "Today: N calls · X tokens".
+- Stored only on your Mac (the last 1,000 calls and 90 days of daily totals), with no text ever and nothing sent anywhere.
+- Fixed: the "No API key" message could name the wrong provider.
+
 ## 2.1.0
 
 - **Privacy notice and consent.** The setup guide and Settings → Privacy say exactly what is sent where: your text goes to the provider you chose, with your key, and live checking sends paragraphs as you type. Live checking doesn't start until you confirm.

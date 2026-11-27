@@ -20,6 +20,7 @@ Nib is free and open source (MIT). There's no Nib account and no Nib server: you
 - **Rewrite a selection: ⇧⇧** or the ✨ button. Rewrites in 13 editable styles (professional, concise, friendly, formal, apology, polite decline…) or your own.
 - **Pause: ⌘⌘.** While paused, nothing is read and nothing is sent.
 - **Your choice of AI:** Gemini (AI Studio or Vertex AI), Claude, OpenAI, DeepSeek, Qwen, or any OpenAI-compatible server, including local ones like Ollama or LM Studio.
+- **Usage statistics.** Settings → Usage shows calls and tokens for today, 7 or 30 days, by feature and model, with CSV export. They're kept on your Mac only.
 - **Careful with your text.** Only the changed words are written back, so formatting is kept. Every write is read back to confirm it worked. Password fields and terminals are never read.
 
 ## Install
@@ -51,6 +52,7 @@ A double-tap counts only when the key is tapped on its own, so typing with ⌥, 
 - Your text goes **only to the provider you choose, with your own key**. There's no Nib server, no account, no analytics and no tracking.
 - **Live checking sends paragraphs as you type** (about a second after you stop), one paragraph at a time, and only paragraphs it hasn't seen. ⌥⌥ sends the selection or the field; ⇧⇧ sends the selection.
 - Nib **never reads** password fields or terminals. You can turn live checking off for any app.
+- **Usage statistics stay on your Mac.** They hold the time, feature, provider, model and token counts, never text, and are never sent anywhere.
 - **Nib's log never contains your text.** It records only which app, which method, lengths, timings and errors. **Copy Diagnostics** reports numbers only.
 - Each provider has its own data policy. Check it, or use a local model through **Custom (OpenAI-compatible)** to keep everything on your Mac.
 - Update checks fetch the update feed from this project's website. They send no text and no identifiers beyond what any web request does.

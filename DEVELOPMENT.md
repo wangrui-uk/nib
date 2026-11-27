@@ -19,6 +19,7 @@ Notes for contributors. For building and testing, see [CONTRIBUTING.md](CONTRIBU
 | `SystemTextChecking.swift` | Opt-in switches for macOS spelling underlines, autocorrect and predictive text (saved and restored) |
 | `Diagnostics.swift`, `E2E.swift`, `SelfTest.swift` | Copy Diagnostics, end-to-end runs, in-process tests and UI renders |
 | `Settings.swift`, `SettingsView.swift`, `OnboardingView.swift` | Preferences, Keychain, Settings window, setup guide |
+| `Usage.swift` | Local usage statistics: token parsing per protocol, storage, Settings → Usage |
 | `Updates.swift`, `Consent.swift` | Sparkle updater; the privacy notice and the OK asked before live checking runs |
 | `NibIcon.swift` | The app and menu-bar icons, drawn in code |
 

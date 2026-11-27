@@ -72,7 +72,7 @@ extension Gemini {
             "required": ["issues"],
         ]
         let out = try await AI.complete(AIRequest(system: instruction, user: "Text:\n<<<\n\(text)\n>>>", temperature: 0,
-                                                  schema: schema, timeout: 15))
+                                                  schema: schema, timeout: 15, feature: .live))
         guard let data = out.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let raw = json["issues"] as? [[String: Any]] else { return [] }
