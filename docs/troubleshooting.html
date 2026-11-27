@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Troubleshooting · Nib</title>
+<meta name="description" content="Fixing Nib in Slack, Chrome and VS Code, and using Copy Diagnostics.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="images/icon.png">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="index.html"><img src="images/icon.png" alt="" width="28" height="28"> Nib</a>
+  <nav><a href="index.html">Home</a><a href="setup.html">Setup</a><a href="shortcuts.html">Shortcuts</a><a href="privacy.html">Privacy</a><a href="troubleshooting.html" aria-current="page">Troubleshooting</a><a href="faq.html">FAQ</a><a href="https://github.com/wangrui-uk/nib">GitHub</a></nav>
+</header>
+<main>
+
+<h1>Troubleshooting</h1>
+
+<h2>First: Copy Diagnostics</h2>
+<p>Click in the field where Nib doesn't behave, then choose <b>Copy Diagnostics</b> from Nib's menu. After a 5-second countdown, a report is copied to the clipboard. It lists every step live checking takes, with ✓ or ✗, and stops at the step that fails. It contains numbers and settings only, never your text, so it's safe to paste into an issue.</p>
+
+<h2>No underlines anywhere</h2>
+<ul>
+<li>Is Nib running? Look for the nib icon in the menu bar. Turn on <i>Open at login</i> in Settings so it starts after a restart.</li>
+<li>Is it paused? The icon has a slash, and the menu says <i>Resume Nib</i>. Tap <kbd>⌘</kbd><kbd>⌘</kbd>.</li>
+<li>Check the menu's status line for “Needs Accessibility permission”, “No API key” or “Live checking paused: …” (for example, a quota or key problem).</li>
+<li>After an update, macOS sometimes needs the Accessibility permission again: remove Nib with <b>−</b>, add it back, and click <b>Restart Nib</b> in the setup guide.</li>
+</ul>
+
+<h2>Slack and other Electron apps</h2>
+<ul>
+<li>Nib asks Slack for its accessibility information, which Slack builds a few seconds later. Underlines may take a moment after Slack or Nib starts. Nib retries by itself.</li>
+<li>If underlines stay away, click into the message box again or switch channels, then run Copy Diagnostics.</li>
+<li><kbd>⌥</kbd><kbd>⌥</kbd> works through copy and paste here, so formatting inside the corrected text can be lost.</li>
+</ul>
+
+<h2>Chrome and other Chromium browsers</h2>
+<ul>
+<li>Text areas, input fields and rich editors (contenteditable) are supported. Nib switches on the browser's accessibility support for web pages, which can cost a little speed on very large pages.</li>
+<li>Some web editors (Google Docs, canvas-based editors) don't expose their text; use <kbd>⌥</kbd><kbd>⌥</kbd> there.</li>
+</ul>
+
+<h2>VS Code (experimental)</h2>
+<ol>
+<li>In Nib: <b>Settings → Live checking → Allow underlines in code editors</b>.</li>
+<li>In VS Code: set <b>Editor: Accessibility Support</b> to <b>on</b> (Settings → search “accessibility support”).</li>
+<li>Only prose files are checked: <code>.md</code>, <code>.markdown</code>, <code>.txt</code>, <code>.rst</code>, <code>.adoc</code>, <code>.tex</code>, files with no extension such as README, and untitled documents. Code is never sent.</li>
+</ol>
+<p>Underline positions assume a monospaced editor font. Folded regions aren't handled yet.</p>
+
+<h2>“Couldn't apply… it's on the clipboard”</h2>
+<p>The app didn't accept the change (or Nib couldn't confirm it), so the corrected text was left on the clipboard. Paste it with <kbd>⌘V</kbd>.</p>
+
+<h2>Provider errors</h2>
+<p>Use <b>Test connection</b> in Settings. Errors are shown in plain words: invalid key, no credit or quota left, model not found, or rate limit reached. Try another model with <b>Load models</b>.</p>
+
+</main>
+<footer>
+  <p>Nib is free and open source (<a href="https://github.com/wangrui-uk/nib/blob/main/LICENSE">MIT</a>). No account, no Nib server, no analytics.
+  <a href="https://github.com/wangrui-uk/nib">Source</a> · <a href="https://github.com/wangrui-uk/nib/issues">Issues</a> · <a href="https://github.com/wangrui-uk/nib/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/wangrui-uk/nib/security/advisories/new">Report a vulnerability</a></p>
+</footer>
+</body>
+</html>

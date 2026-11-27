@@ -1,0 +1,29 @@
+# Build output
+.build/
+build/
+*.app
+*.iconset/
+*.dSYM/
+
+# Logs and temporary artefacts
+*.log
+/tmp/
+results.txt
+
+# Anything that could hold keys or credentials
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*secret*
+*credentials*
+
+.DS_Store
+
+# Release output
+dist/
+*.dmg
+
+# Local signing settings (identity, notary profile)
+release.local.env

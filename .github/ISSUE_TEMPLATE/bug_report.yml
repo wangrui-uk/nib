@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in Nib doesn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please **don't include your own private text, API keys or screenshots of private messages**. A made-up sentence that shows the problem is perfect.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: App and field
+      description: Where were you typing? (e.g. "Slack message box", "Chrome, Gmail compose", "VS Code, notes.md")
+    validations:
+      required: true
+  - type: dropdown
+    id: feature
+    attributes:
+      label: Feature
+      options:
+        - Live underlines / popup
+        - Correct (⌥⌥)
+        - Rewrite (⇧⇧ / ✨)
+        - Pause (⌘⌘)
+        - Setup, Settings or provider
+        - Updates
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Copy Diagnostics report
+      description: |
+        Click in the field, choose **Copy Diagnostics** from Nib's menu-bar menu, wait for the 5-second countdown, then paste here. It contains numbers and settings only, never your text.
+      render: text
+  - type: input
+    id: versions
+    attributes:
+      label: Nib, macOS and provider
+      description: e.g. "Nib 2.1.0, macOS 26.1, Gemini (AI Studio), gemini-3.5-flash-lite"
+    validations:
+      required: true

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy · Nib</title>
+<meta name="description" content="What Nib sends, when, and where: only to the provider you choose, with your own key.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="images/icon.png">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="index.html"><img src="images/icon.png" alt="" width="28" height="28"> Nib</a>
+  <nav><a href="index.html">Home</a><a href="setup.html">Setup</a><a href="shortcuts.html">Shortcuts</a><a href="privacy.html" aria-current="page">Privacy</a><a href="troubleshooting.html">Troubleshooting</a><a href="faq.html">FAQ</a><a href="https://github.com/wangrui-uk/nib">GitHub</a></nav>
+</header>
+<main>
+
+<h1>Privacy</h1>
+<p class="lead">Nib has no server, no account, no analytics and no tracking. Your text goes from your Mac straight to the AI provider you choose, with your own key.</p>
+
+<h2>What is sent, and when</h2>
+<table><tbody>
+<tr><td><b>Live checking</b></td><td>About a second after you stop typing, the paragraphs Nib hasn't seen yet in the field you're typing in, one paragraph at a time. In VS Code, only the visible lines of prose files.</td></tr>
+<tr><td><b>Correct (⌥⌥)</b></td><td>The selected text, or the whole field.</td></tr>
+<tr><td><b>Rewrite (⇧⇧ / ✨)</b></td><td>The selected text and the style's instruction.</td></tr>
+<tr><td><b>Paused (⌘⌘)</b></td><td>Nothing.</td></tr>
+</tbody></table>
+<p>Nib asks you to confirm before live checking runs for the first time. You can turn live checking off entirely, or for one app (<i>Turn Off in &lt;App&gt;</i>).</p>
+
+<h2>What is never read</h2>
+<ul><li>Password fields.</li><li>Terminals (Terminal, iTerm2, Warp, Ghostty, kitty and others).</li><li>Apps you've turned off.</li></ul>
+
+<h2>Where things are stored</h2>
+<ul>
+<li><b>API keys:</b> in your login Keychain, one item per provider. Never written to disk in plain text, never logged.</li>
+<li><b>Settings:</b> in Nib's preferences on your Mac.</li>
+<li><b>Logs:</b> <code>~/Library/Logs/Nib.log</code> records the app, the method used, lengths, timings and errors. <b>Never your text.</b></li>
+<li><b>Copy Diagnostics</b> reports numbers and settings only (roles, positions, which step failed), never text.</li>
+</ul>
+
+<h2>Your provider</h2>
+<p>Each provider handles the text it receives under its own terms, so check your provider's data policy. To keep everything on your Mac, run a local model (Ollama, LM Studio) and choose <b>Custom (OpenAI-compatible)</b>.</p>
+
+<h2>Updates</h2>
+<p>Nib checks this site's update feed (<code>appcast.xml</code>) once a day by default. That request carries no text and no identifiers beyond what any web request does. Updates are signed (EdDSA) and notarised by Apple. You can turn automatic checks off in Settings.</p>
+
+<p>The source code is public, so you can check all of this: <a href="https://github.com/wangrui-uk/nib">https://github.com/wangrui-uk/nib</a>.</p>
+
+</main>
+<footer>
+  <p>Nib is free and open source (<a href="https://github.com/wangrui-uk/nib/blob/main/LICENSE">MIT</a>). No account, no Nib server, no analytics.
+  <a href="https://github.com/wangrui-uk/nib">Source</a> · <a href="https://github.com/wangrui-uk/nib/issues">Issues</a> · <a href="https://github.com/wangrui-uk/nib/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/wangrui-uk/nib/security/advisories/new">Report a vulnerability</a></p>
+</footer>
+</body>
+</html>

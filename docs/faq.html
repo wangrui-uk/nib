@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ · Nib</title>
+<meta name="description" content="Questions about Nib: cost, privacy, providers, formatting, updates.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="images/icon.png">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="index.html"><img src="images/icon.png" alt="" width="28" height="28"> Nib</a>
+  <nav><a href="index.html">Home</a><a href="setup.html">Setup</a><a href="shortcuts.html">Shortcuts</a><a href="privacy.html">Privacy</a><a href="troubleshooting.html">Troubleshooting</a><a href="faq.html" aria-current="page">FAQ</a><a href="https://github.com/wangrui-uk/nib">GitHub</a></nav>
+</header>
+<main>
+
+<h1>FAQ</h1>
+<dl class="faq">
+<dt>Is Nib really free?</dt><dd>Yes, MIT-licensed, with no paid tier. You pay your AI provider for what you use; with Flash-Lite-class models, everyday writing typically costs very little. A local model costs nothing.</dd>
+<dt>Does my text go to a Nib server?</dt><dd>No. There's no Nib server. Text goes from your Mac directly to the provider you chose. See <a href="privacy.html">Privacy</a>.</dd>
+<dt>Which provider should I pick?</dt><dd>Gemini Flash-Lite through Google AI Studio is the default: fast, inexpensive and good at this task. Claude Haiku and GPT mini models work well too. For full privacy, use a local model through Custom (OpenAI-compatible).</dd>
+<dt>Does it work offline?</dt><dd>Only with a local model (Ollama, LM Studio) set up as a Custom provider.</dd>
+<dt>Which languages?</dt><dd>Nib keeps your language and your spelling variety (British or American English). How well other languages are checked depends on the model.</dd>
+<dt>Will it change my formatting?</dt><dd>In native apps, Nib writes back only the changed words, so bold, links and lists are kept. In Chromium and Electron apps ⌥⌥ pastes plain text, so select just the sentence if formatting matters.</dd>
+<dt>Can I hide macOS's own red underlines or autocorrect bubbles?</dt><dd>Yes, with opt-in switches in Settings → Live checking. Your settings are restored when you turn them off, pause or quit. Writing Tools can only be turned off in System Settings → Apple Intelligence &amp; Siri.</dd>
+<dt>Why does Nib need Accessibility?</dt><dd>It's how macOS lets an app read the field you're typing in, find where words are on screen, and write corrections back.</dd>
+<dt>How do updates work?</dt><dd>Nib uses <a href="https://sparkle-project.org/">Sparkle</a>. Updates are signed and notarised. Nib checks automatically (you can turn this off), or use <b>Check for Updates…</b> in the menu.</dd>
+<dt>How can I help?</dt><dd>Report bugs with a Copy Diagnostics report, suggest apps to support, or send a pull request: see <a href="https://github.com/wangrui-uk/nib/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</dd>
+</dl>
+
+</main>
+<footer>
+  <p>Nib is free and open source (<a href="https://github.com/wangrui-uk/nib/blob/main/LICENSE">MIT</a>). No account, no Nib server, no analytics.
+  <a href="https://github.com/wangrui-uk/nib">Source</a> · <a href="https://github.com/wangrui-uk/nib/issues">Issues</a> · <a href="https://github.com/wangrui-uk/nib/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/wangrui-uk/nib/security/advisories/new">Report a vulnerability</a></p>
+</footer>
+</body>
+</html>

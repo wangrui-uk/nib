@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setup · Nib</title>
+<meta name="description" content="Install Nib, allow Accessibility, and get an API key for Gemini, Claude, OpenAI, DeepSeek, Qwen, Vertex AI or a local model.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="images/icon.png">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="index.html"><img src="images/icon.png" alt="" width="28" height="28"> Nib</a>
+  <nav><a href="index.html">Home</a><a href="setup.html" aria-current="page">Setup</a><a href="shortcuts.html">Shortcuts</a><a href="privacy.html">Privacy</a><a href="troubleshooting.html">Troubleshooting</a><a href="faq.html">FAQ</a><a href="https://github.com/wangrui-uk/nib">GitHub</a></nav>
+</header>
+<main>
+
+<h1>Setup</h1>
+<ol class="steps">
+<li><h3>Install</h3><p>Download the DMG from the <a href="https://github.com/wangrui-uk/nib/releases/latest">latest release</a>, open it, and drag <b>Nib</b> to <b>Applications</b>. Then open Nib. Its nib icon appears in the menu bar, and the setup guide opens.</p></li>
+<li><h3>Allow Accessibility</h3><p>Nib reads and fixes text in other apps through macOS Accessibility. In the setup guide click <b>Open Accessibility Settings</b> and turn on <b>Nib</b>. The status turns green within a second.</p>
+<p class="note">If Nib is listed but still shows “Not allowed” (this can happen after an update or a rebuild), remove it with <b>−</b>, add it again, and click <b>Restart Nib</b> in the setup guide.</p></li>
+<li><h3>Choose a provider and paste your key</h3><p>Pick a provider, paste its API key, click <b>Load models</b> and pick a model, then <b>Test connection</b>. Keys are stored in your login Keychain, one per provider.</p></li>
+<li><h3>Read the privacy note and confirm</h3><p>Nib explains what will be sent where. Live checking starts only after you confirm. You can change this any time in <b>Settings → Privacy</b>.</p></li>
+</ol>
+
+<h2 id="providers">Getting an API key</h2>
+<table>
+<thead><tr><th>Provider</th><th>Where to get a key</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><b>Gemini (Google AI Studio)</b>, the default</td><td><a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a></td><td>Fast and cheap with the Flash-Lite models. Default model <code>gemini-3.5-flash-lite</code>.</td></tr>
+<tr><td><b>Claude (Anthropic)</b></td><td><a href="https://console.anthropic.com/settings/keys">console.anthropic.com → API keys</a></td><td>Haiku is a good fit for quick checks.</td></tr>
+<tr><td><b>OpenAI</b></td><td><a href="https://platform.openai.com/api-keys">platform.openai.com/api-keys</a></td><td>Nib uses the lowest reasoning effort.</td></tr>
+<tr><td><b>DeepSeek</b></td><td><a href="https://platform.deepseek.com/api_keys">platform.deepseek.com → API keys</a></td><td></td></tr>
+<tr><td><b>Qwen (Alibaba Cloud Model Studio)</b></td><td>International: <a href="https://modelstudio.console.alibabacloud.com/">Model Studio console</a> (<a href="https://www.alibabacloud.com/help/en/model-studio/get-api-key">how to</a>)<br>China: <a href="https://bailian.console.aliyun.com/">Bailian console</a> (<a href="https://help.aliyun.com/zh/model-studio/get-api-key">how to</a>)</td><td>International and China keys are different: pick the region your key is from in Settings.</td></tr>
+<tr><td><b>Gemini via Vertex AI</b></td><td>No key: Nib uses your Google Cloud sign-in. Install the <a href="https://cloud.google.com/sdk/docs/install">gcloud CLI</a>, then run<br><code>gcloud auth application-default login</code></td><td>Enter your <b>Project ID</b> and <b>Region</b> in Settings. The project needs the Vertex AI API enabled (<a href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstarts/quickstart">quickstart</a>).</td></tr>
+<tr><td><b>Custom (OpenAI-compatible)</b></td><td>Your server's base URL, e.g. <code>http://localhost:11434/v1</code> (Ollama) or <code>http://localhost:1234/v1</code> (LM Studio), or OpenRouter.</td><td>The key is optional. A local model keeps all text on your Mac.</td></tr>
+</tbody>
+</table>
+
+<h2>Settings worth knowing</h2>
+<ul>
+<li><b>Live checking:</b> on or off, per-app off list (<i>Turn Off in &lt;App&gt;</i> in the menu), and experimental underlines in code editors.</li>
+<li><b>Correction:</b> apply straight away, or show the changes first; an extra instruction such as “use British English”.</li>
+<li><b>Appearance:</b> popup font and size.</li>
+<li><b>macOS text features:</b> opt-in switches to hide macOS's own spelling underlines, autocorrect or predictive text while Nib is on. Your settings are restored when you turn them off, pause or quit.</li>
+<li><b>Updates:</b> check automatically (on by default), or <b>Check for Updates…</b> in the menu.</li>
+</ul>
+
+</main>
+<footer>
+  <p>Nib is free and open source (<a href="https://github.com/wangrui-uk/nib/blob/main/LICENSE">MIT</a>). No account, no Nib server, no analytics.
+  <a href="https://github.com/wangrui-uk/nib">Source</a> · <a href="https://github.com/wangrui-uk/nib/issues">Issues</a> · <a href="https://github.com/wangrui-uk/nib/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/wangrui-uk/nib/security/advisories/new">Report a vulnerability</a></p>
+</footer>
+</body>
+</html>

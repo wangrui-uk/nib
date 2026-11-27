@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shortcuts · Nib</title>
+<meta name="description" content="Nib's shortcuts: ⌥⌥ correct, ⇧⇧ rewrite, ⌘⌘ pause, ⌃⌥Z undo.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="images/icon.png">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="index.html"><img src="images/icon.png" alt="" width="28" height="28"> Nib</a>
+  <nav><a href="index.html">Home</a><a href="setup.html">Setup</a><a href="shortcuts.html" aria-current="page">Shortcuts</a><a href="privacy.html">Privacy</a><a href="troubleshooting.html">Troubleshooting</a><a href="faq.html">FAQ</a><a href="https://github.com/wangrui-uk/nib">GitHub</a></nav>
+</header>
+<main>
+
+<h1>Shortcuts</h1>
+<table>
+<thead><tr><th>Shortcut</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><kbd>⌥</kbd><kbd>⌥</kbd> tap Option twice</td><td>Correct the selection, or the whole field if nothing is selected</td></tr>
+<tr><td><kbd>⇧</kbd><kbd>⇧</kbd> tap Shift twice</td><td>Rewrite the selection (or click the ✨ button that appears at the end of a selection)</td></tr>
+<tr><td><kbd>⌘</kbd><kbd>⌘</kbd> tap Command twice</td><td>Pause or resume Nib. While paused, nothing is read or sent.</td></tr>
+<tr><td><kbd>⌃⌥Z</kbd></td><td>Undo the last correction, rewrite or applied fix</td></tr>
+</tbody>
+</table>
+
+<h2>In the live popup</h2>
+<table><tbody>
+<tr><td><kbd>⇥</kbd> Tab</td><td>Apply this fix</td></tr>
+<tr><td><kbd>⇧⇥</kbd> Shift-Tab</td><td>Apply every underlined fix in the field</td></tr>
+<tr><td><kbd>esc</kbd></td><td>Ignore this suggestion for the session</td></tr>
+</tbody></table>
+<p>These keys are only captured while the popup is showing for the field you're in. Otherwise Tab and Escape reach your app as normal.</p>
+
+<h2>In the suggestion and rewrite cards</h2>
+<table><tbody>
+<tr><td><kbd>↩</kbd></td><td>Accept / Replace</td></tr>
+<tr><td><kbd>⌘R</kbd></td><td>Try again (a different rewrite)</td></tr>
+<tr><td><kbd>esc</kbd></td><td>Dismiss</td></tr>
+</tbody></table>
+
+<h2>How double-taps work</h2>
+<p>A double-tap counts only when the key is tapped on its own: two short presses close together, with no other key, modifier or click in between. Typing with <kbd>⌥</kbd>, <kbd>⇧</kbd> or <kbd>⌘</kbd> (⌘C, ⌘Tab, ⌥-arrows…) never triggers it. Prefer regular shortcuts? In <b>Settings → Shortcuts</b> choose <i>Custom shortcut</i> and record one.</p>
+
+</main>
+<footer>
+  <p>Nib is free and open source (<a href="https://github.com/wangrui-uk/nib/blob/main/LICENSE">MIT</a>). No account, no Nib server, no analytics.
+  <a href="https://github.com/wangrui-uk/nib">Source</a> · <a href="https://github.com/wangrui-uk/nib/issues">Issues</a> · <a href="https://github.com/wangrui-uk/nib/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/wangrui-uk/nib/security/advisories/new">Report a vulnerability</a></p>
+</footer>
+</body>
+</html>
