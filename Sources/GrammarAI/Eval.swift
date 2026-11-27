@@ -236,8 +236,23 @@ enum Eval {
             var region = er
             for i in m { region = NSUnionRange(region, ranges[i]) }
             for a in altRanges { region = NSUnionRange(region, a.0) }
+            // Other expected errors inside the same region (a model may fix neighbouring errors in one issue).
+            var others: [(NSRange, [String])] = []
+            for o in c.issues where o.span != e.span {
+                let orr = Gemini.spanRange(o.span, in: ns)
+                if orr.location != NSNotFound, NSIntersectionRange(orr, region).length == orr.length {
+                    region = NSUnionRange(region, orr)
+                    others.append((orr, o.fixes))
+                }
+            }
             let got = norm(apply(ns, region: region, m.map { (ranges[$0], issues[$0].fix) }))
-            var ok = e.fixes.contains { norm(apply(ns, region: region, [(er, $0)])) == got }
+            // Acceptable: this error fixed (any acceptable fix), with the others in the region fixed or left as they are.
+            func combos(_ rest: [(NSRange, [String])]) -> [[(NSRange, String)]] {
+                guard let (r, fixes) = rest.first else { return [[]] }
+                let tail = combos(Array(rest.dropFirst()))
+                return tail + fixes.flatMap { f in tail.map { [(r, f)] + $0 } }
+            }
+            var ok = e.fixes.contains { f in combos(others).contains { norm(apply(ns, region: region, [(er, f)] + $0)) == got } }
             if !ok { ok = altRanges.contains { norm(apply(ns, region: region, [($0.0, $0.1)])) == got } }
             if ok { if !optional { r.fixed += 1 } } else { r.wrongFixes.append("\(e.span): got \(m.map { "\(issues[$0].text) → \(issues[$0].fix)" }.joined(separator: " + "))") }
             if e.expectExample == true {

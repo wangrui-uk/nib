@@ -177,6 +177,22 @@ extension Gemini {
                 }
             }
             flush()
+            // Changes one word apart belong together ("suggested me to apply" → "suggested that I apply").
+            var merged: [(String, String, Int)] = []
+            for g in out {
+                if let last = merged.last {
+                    let gapStart = last.2 + last.0.count
+                    if g.2 >= gapStart {
+                        let gap = String(tc[gapStart..<g.2])
+                        if gap.split(whereSeparator: \.isWhitespace).count <= 1 {
+                            merged[merged.count - 1] = (last.0 + gap + g.0, last.1 + gap + g.1, last.2)
+                            continue
+                        }
+                    }
+                }
+                merged.append(g)
+            }
+            out = merged
         } else {
             let b = Array(fix)
             var (p, q) = affixes(tc, b)
@@ -185,6 +201,12 @@ extension Gemini {
             // Spacing-only or pure insertion: include the neighbours on both sides.
             if o.trimmingCharacters(in: .whitespaces).isEmpty || n.trimmingCharacters(in: .whitespaces).isEmpty || o.filter({ !$0.isWhitespace }) == n.filter({ !$0.isWhitespace }) {
                 if p > 0 { p -= 1 }; if q > 0 { q -= 1 }
+                (o, n) = core()
+            }
+            else if t.contains(where: \.isWhitespace) || lineText.contains(" ") {
+                // Korean (spaced): whole words, never part of one (어떻해 → 어떻게, not 해 → 게).
+                while p > 0, !tc[p - 1].isWhitespace { p -= 1 }
+                while q > 0, !tc[tc.count - q].isWhitespace { q -= 1 }
                 (o, n) = core()
             }
             if !o.isEmpty, o != n { out.append((o, n, p)) }
