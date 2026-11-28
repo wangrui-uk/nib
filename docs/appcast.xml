@@ -7,6 +7,15 @@
     <language>en</language>
     <!-- items -->
     <item>
+      <title>Nib 2.2.4</title>
+      <pubDate>Sat, 28 Nov 2026 01:30:27 GMT</pubDate>
+      <sparkle:version>29</sparkle:version>
+      <sparkle:shortVersionString>2.2.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[<ul><li><b>No more false &quot;Underlines aren&#x27;t available&quot; messages.</b> A hint now needs evidence: you&#x27;re typing into an editable field (never a button, link, list, the address bar, a search field, Finder or the desktop), its text actually changed, and the failure has lasted a few seconds (not a moment while an app rebuilds its accessibility tree, and not right after a click). It appears at most once per app, ever, as a short card (&quot;No underlines in Chrome here — double-tap ⌥ to correct.&quot;) with <b>Don&#x27;t show again</b>; after that, the menu shows &quot;Underlines unavailable in &lt;App&gt; — why?&quot;. Turn hints off in Settings → Live checking.</li><li><b>Underlines in wrapped paragraphs of rich editors</b> (Chrome forms, Slack…) now sit on the right line. A paragraph that wraps is one text run several lines tall; Nib placed every underline at the bottom of that run, so words on the first line were underlined on the last. It now works out the run&#x27;s lines and places each underline on its own line.</li><li><b>Chrome underlines stay on their words.</b> Positions are no longer reused after the page or the field scrolls or the layout changes, only underlines inside the visible field are drawn, and in Chrome and Electron apps each underline is checked against the character under it before it&#x27;s drawn; a mismatch is recomputed instead of drawn in empty space.</li><li><b>✨ Rewrite chip</b>: sized for your popup font (no more &quot;Rewri…&quot; with large fonts), and placed just after the selection on the same line (or just below it near the screen edge), never over the selected text.</li><li>How these were checked: the Chrome fixes (wrapped runs, layout-keyed position caches, the hit-test check) were verified with self-tests and against a real Chrome log, not yet with a hands-off run; please report any underline that lands in the wrong place, ideally with Menu → Copy Diagnostics….</li></ul>]]></description>
+      <enclosure url="https://github.com/wangrui-uk/nib/releases/download/v2.2.4/Nib-2.2.4.dmg" sparkle:edSignature="x+Va40AQh66/aYBn2jl1grkUmYK2k95LFFmBcnVQRzk1gcpJGzh+HXZ1x5943KzNW9c3afZCQoPr3TsofY9aCw==" length="3028511" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>Nib 2.2.3</title>
       <pubDate>Fri, 27 Nov 2026 23:46:59 GMT</pubDate>
       <sparkle:version>28</sparkle:version>
