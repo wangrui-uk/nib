@@ -6,6 +6,7 @@
 - **Underlines in wrapped paragraphs of rich editors** (Chrome forms, Slack…) now sit on the right line. A paragraph that wraps is one text run several lines tall; Nib placed every underline at the bottom of that run, so words on the first line were underlined on the last. It now works out the run's lines and places each underline on its own line.
 - **Chrome underlines stay on their words.** Positions are no longer reused after the page or the field scrolls or the layout changes, only underlines inside the visible field are drawn, and in Chrome and Electron apps each underline is checked against the character under it before it's drawn; a mismatch is recomputed instead of drawn in empty space.
 - **✨ Rewrite chip**: sized for your popup font (no more "Rewri…" with large fonts), and placed just after the selection on the same line (or just below it near the screen edge), never over the selected text.
+- How these were checked: the Chrome fixes (wrapped runs, layout-keyed position caches, the hit-test check) were verified with self-tests and against a real Chrome log, not yet with a hands-off run; please report any underline that lands in the wrong place, ideally with Menu → Copy Diagnostics….
 
 ## 2.2.3
 
