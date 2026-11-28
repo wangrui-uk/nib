@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.4
+
+- **No more false "Underlines aren't available" messages.** A hint now needs evidence: you're typing into an editable field (never a button, link, list, the address bar, a search field, Finder or the desktop), its text actually changed, and the failure has lasted a few seconds (not a moment while an app rebuilds its accessibility tree, and not right after a click). It appears at most once per app, ever, as a short card ("No underlines in Chrome here — double-tap ⌥ to correct.") with **Don't show again**; after that, the menu shows "Underlines unavailable in <App> — why?". Turn hints off in Settings → Live checking.
+- **Chrome underlines stay on their words.** Positions are no longer reused after the page or the field scrolls or the layout changes, only underlines inside the visible field are drawn, and in Chrome and Electron apps each underline is checked against the character under it before it's drawn; a mismatch is recomputed instead of drawn in empty space.
+- **✨ Rewrite chip**: sized for your popup font (no more "Rewri…" with large fonts), and placed just after the selection on the same line (or just below it near the screen edge), never over the selected text.
+
 ## 2.2.3
 
 - **Every language is checked by default.** Settings → Languages to check is now opt-out: all languages start ticked, and you untick the ones you don't want checked as you type. Your Mac's language list is only used as a hint when a short piece of text is hard to identify; it never causes a language to be skipped. (In 2.2.2 the default followed the Mac's languages, so Korean wasn't checked on a Mac without Korean in its list.) If you never changed the list, you get the new default automatically; a list you changed is kept.

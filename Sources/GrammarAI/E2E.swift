@@ -37,7 +37,7 @@ enum E2E {
         func page(_ name: String, _ body: String) -> URL {
             let url = dir.appendingPathComponent("\(name).html")
             try? """
-            <!doctype html><html><head><meta charset="utf-8"><title>GrammarAI Test \(name)</title></head><body>\(body)
+            <!doctype html><html><head><meta charset="utf-8"><title>GrammarAI Test \(name)</title></head><body><div style="height:160px"></div>\(body)<div style="height:2400px"></div>
             <script>const f=document.getElementById('f');f.focus();
             if(f.setSelectionRange){f.setSelectionRange(f.value.length,f.value.length)}</script></body></html>
             """.write(to: url, atomically: true, encoding: .utf8)
@@ -47,6 +47,11 @@ enum E2E {
         let input = page("input", "<input id=f size=80 value=\"\(sample)\">")
         let ceBody = sample == englishSample ? "i has went to the <b>store</b> yesterday and buyed three apple, they was delicious." : sample
         let ce = page("contenteditable", "<div id=f contenteditable style='border:1px solid #999;padding:6px'>\(ceBody)</div>")
+        let rich2 = page("richeditor", """
+            <div style='border:1px solid #bbb;width:640px'><div style='border-bottom:1px solid #ddd;padding:4px'>
+            <button>B</button> <button>I</button> <button>U</button> <span>Paragraph</span></div>
+            <div class='ql-container'><div id=f class='ql-editor' contenteditable style='padding:8px;min-height:80px'><p>\(ceBody)</p></div></div></div>
+            """)
         return [
             Case(name: "TextEdit rich text (whole doc)", bundleID: "com.apple.TextEdit", file: rtf),
             Case(name: "TextEdit rich text (selection)", bundleID: "com.apple.TextEdit", file: rtfSel, selectText: "buyed three apple"),
@@ -56,6 +61,7 @@ enum E2E {
             Case(name: "Chrome <textarea>", bundleID: "com.google.Chrome", file: ta),
             Case(name: "Chrome <input>", bundleID: "com.google.Chrome", file: input),
             Case(name: "Chrome contenteditable", bundleID: "com.google.Chrome", file: ce),
+            Case(name: "Chrome rich editor", bundleID: "com.google.Chrome", file: rich2),
         ]
     }
 
@@ -334,6 +340,21 @@ enum E2E {
                 }
                 record("SCREENSHOT \(c.name)")
                 await sleep(2.5) // the test script takes a screenshot now
+                if c.bundleID == "com.google.Chrome" {
+                    // Scroll the page by ~120 pt: underlines must follow the text, never stay behind in empty space.
+                    for _ in 0..<3 { CGEvent(scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 1, wheel1: -40, wheel2: 0, wheel3: 0)?.post(tap: .cghidEventTap); await sleep(0.1) }
+                    await sleep(2.0)
+                    let after = LiveChecker.shared.marks
+                    var wrong = 0, checked = 0
+                    if let el = TextTarget.focusedRaw(app, AXUIElementCreateApplication(app.processIdentifier)) {
+                        for m in after { if let r = m.rects.first { checked += 1
+                            let p = TextAccess.flip(r)
+                            if !LiveChecker.indexMatches(TextMarkers.indexAt(el, CGPoint(x: p.midX, y: p.midY)), m.range) { wrong += 1 } } }
+                    }
+                    record("     after scroll: \(after.count) underlines, \(checked) hit-tested, \(wrong) on the wrong text — \(after.prefix(3).flatMap(\.rects).map { "\(Int($0.minX)),\(Int($0.minY))" }.joined(separator: " | "))")
+                    record("SCREENSHOT \(c.name) after scroll")
+                    await sleep(2.5)
+                }
                 let before = readField(app)
                 LiveChecker.shared.apply(m)
                 await sleep(0.6)

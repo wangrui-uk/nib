@@ -175,8 +175,10 @@ enum UIRender {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
         let s = Settings.shared
+        s.persist = false // renders never touch the user's settings
         let saved = (s.popupFont, s.popupFontSize)
-        let variants: [(String, String, Double)] = [("font-system-11", "", 11), ("font-system-20", "", 20),
+        let variants: [(String, String, Double)] = [("font-system-11", "", 11), ("font-system-13", "", 13), ("font-system-20", "", 20),
+                                                    ("font-yugothic-20", "YuGothic", 20),
                                                     ("font-georgia-16", "Georgia", 16), ("font-mono-14", "__mono__", 14),
                                                     ("font-avenir-18", "Avenir Next", 18)]
         DispatchQueue.main.async {
@@ -184,6 +186,7 @@ enum UIRender {
                 s.popupFont = font; s.popupFontSize = size
                 let view = VStack(alignment: .leading, spacing: 0) {
                     family()
+                    ChipView {}
                     HUDPreview.message("Fixed 3 issues · ⌃⌥Z to undo", .success)
                 }.background(Color(nsColor: .windowBackgroundColor))
                 let host = NSHostingView(rootView: view)

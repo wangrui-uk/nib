@@ -74,15 +74,27 @@ final class SelectionChip {
         }
     }
 
+    /// Where the chip goes (screen coordinates, bottom-left origin), given the last selected character's rect:
+    /// just after it on the same line, vertically centred, if there's room; else just below that line, aligned to
+    /// its end. Never over the selection; clamped to the screen. `padding` is the view's transparent margin. Pure.
+    static func chipFrame(end r: NSRect, size: NSSize, padding: CGFloat, visible vf: NSRect) -> NSRect {
+        let gap: CGFloat = 3
+        let right = NSRect(x: r.maxX + gap - padding, y: r.midY - size.height / 2, width: size.width, height: size.height)
+        if right.maxX - padding <= vf.maxX - CardPlacement.margin {
+            return CardPlacement.clamp(right, padding: padding, in: vf)
+        }
+        var below = NSRect(x: r.maxX - size.width + padding, y: r.minY - gap - size.height + padding, width: size.width, height: size.height)
+        if below.minY + padding < vf.minY + CardPlacement.margin { below.origin.y = r.maxY + gap - padding } // no room below: above
+        return CardPlacement.clamp(below, padding: padding, in: vf)
+    }
+
     private func show(at r: NSRect) {
         let host = FirstMouseHostingView(rootView: ChipView { [weak self] in self?.hide(); self?.action?() })
         let size = host.fittingSize
         let p = panel ?? make()
         p.contentView = host
         let vf = CardPlacement.screen(for: NSPoint(x: r.midX, y: r.midY)).visibleFrame
-        var origin = NSPoint(x: r.maxX - 6, y: r.minY - size.height + 4)
-        if origin.y < vf.minY + CardPlacement.margin { origin.y = r.maxY - 4 }
-        p.setFrame(CardPlacement.clamp(NSRect(origin: origin, size: size), in: vf), display: true)
+        p.setFrame(Self.chipFrame(end: r, size: size, padding: 6, visible: vf), display: true)
         p.orderFrontRegardless()
         isVisible = true
     }
@@ -106,8 +118,9 @@ struct ChipView: View {
         Button(action: action) {
             HStack(spacing: 4 * PopupStyle.scale) {
                 Image(systemName: "sparkles").foregroundColor(.purple)
-                Text("Rewrite")
+                Text("Rewrite").lineLimit(1)
             }
+            .fixedSize() // sized from the measured label in the popup font: never "Rewri…"
             .font(PopupStyle.font(PopupStyle.size * 12 / 13, weight: .medium))
             .padding(.horizontal, 8 * PopupStyle.scale).padding(.vertical, 4 * PopupStyle.scale)
             .background(Capsule().fill(Color(nsColor: .windowBackgroundColor)))

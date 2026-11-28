@@ -43,6 +43,7 @@ struct SettingsView: View {
                         guard on, !settings.privacyConsent else { return }
                         DispatchQueue.main.async { if !Consent.ask() { settings.liveChecking = false } }
                     }
+                Toggle("Tell me when an app can't show underlines (once per app)", isOn: $settings.showUnavailableHints)
                 Toggle("Allow underlines in code editors (experimental)", isOn: $settings.allowCodeEditors)
                 Text("VS Code, Cursor and Windsurf. In the main editor only prose files are checked (.md, .markdown, .txt, .rst and untitled files), and only the lines on screen; code files are never sent. In VS Code, also turn on its Settings → “Editor: Accessibility Support” → on, or it doesn't show where its text is. Side boxes (commit message, search, chat) are checked like any field. ⌥⌥ and ⇧⇧ work in code editors either way.")
                     .font(.caption).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)

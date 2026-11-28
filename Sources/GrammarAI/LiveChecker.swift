@@ -129,12 +129,12 @@ final class LiveChecker {
         let (steps, resolved, stage) = evaluate(app)
         guard let app, let id = app.bundleIdentifier, let target = resolved, stage.isEmpty else {
             if let app, let failed = steps.last(where: { !$0.ok }) {
-                if stage == "excluded" { hintOnce(app, "it's excluded from underlines") }
+                if stage == "excluded" { considerHint(app, "it's excluded from underlines") }
                 if stage == "field" {
                     TextTarget.noteSkip(app, "\(failed.name): \(failed.detail)")
                     TextTarget.reassertTree(app)
                     // The user is typing here, but Nib can't use the field: say so once instead of staying silent.
-                    if typingInFrontApp(app) >= 8 { hintOnce(app, "it doesn't expose its text field to macOS") }
+                    considerHint(app, "it doesn't expose its text field to macOS")
                 }
             }
             clear()
@@ -150,7 +150,7 @@ final class LiveChecker {
             clear()
         }
         if let nb = noBoundsElement, CFEqual(nb.0, el) {
-            if Date().timeIntervalSince(nb.1) < Self.negativeCacheLifetime { clear(); return }
+            if Date().timeIntervalSince(nb.1) < Self.negativeCacheLifetime { considerHint(app, noBoundsReason); clear(); return }
             noBoundsElement = nil
             TextMarkers.forget()
         }
@@ -199,7 +199,7 @@ final class LiveChecker {
         // Where they are on screen.
         guard let visible = Self.visibleFrame(el) else {
             // Found mistakes but the field has no usable frame (no AXPosition/AXSize): say so instead of failing silently.
-            hintOnce(app, "it doesn't report where its text field is on screen")
+            considerHint(app, "it doesn't report where its text field is on screen")
             TextTarget.noteSkip(app, "no frame for the text field (AXPosition/AXSize)")
             TextTarget.reassertTree(app)
             clear(); return
@@ -207,20 +207,56 @@ final class LiveChecker {
         var placed: [Mark] = []
         var anyBounds = false
         let geometryUsed = TextAccess.isCodeEditor(app) && Monaco.isEditContext(el)
+        // Positions are cached per layout: the field's frame (a page scroll or resize moves it) and a one-second
+        // bucket (scrolling inside the field doesn't), so old positions are never reused for long.
+        let ff = Self.frame(el) ?? visible
+        let layout = "\(Int(ff.minX)),\(Int(ff.minY)),\(Int(ff.width)),\(Int(ff.height))|\(Int(Date().timeIntervalSince1970))" + layoutSalt
+        if layout != TextMarkers.layout { TextMarkers.layout = layout; verified.removeAll() }
+        let web = TextAccess.chromiumBundleIDs.contains(id) || TextAccess.isElectron(app)
+        var mismatch = false
         for var m in found {
             guard let rects = lineRects(el, m.range, value) else { continue }
             anyBounds = true
-            // Code editors: only rows fully on screen (not half under the sticky-scroll band or the edge).
-            m.rects = rects.filter { geometryUsed ? visible.contains(CGPoint(x: $0.midX, y: $0.midY)) : visible.intersects($0) }
+            // Only rects whose middle is inside the visible field (never a wave in empty space beside it).
+            m.rects = rects.filter { visible.contains(CGPoint(x: $0.midX, y: $0.midY)) }
+            // Chromium/Electron: check that the character under the underline is really part of the range.
+            let elKey = Int(bitPattern: UInt(CFHash(el)))
+            if web, !geometryUsed, !unverifiable.contains(elKey), let first = m.rects.first {
+                let key = "\(layout)|\(TextMarkers.version)|\(m.range.location)|\(m.range.length)"
+                let ok = verified[key] ?? {
+                    let p = TextAccess.flip(first)
+                    let idx = TextMarkers.indexAt(el, CGPoint(x: p.midX, y: p.midY))
+                    let r = Self.indexMatches(idx, m.range)
+                    verified[key] = r
+                    var c = verifyCounts[elKey] ?? (0, 0)
+                    if r { c.0 += 1 } else { c.1 += 1 }
+                    verifyCounts[elKey] = c
+                    // A field whose hit-test never agrees (a different index basis): don't check it at all,
+                    // rather than hide every underline; the layout-keyed caches still prevent stale positions.
+                    if c.0 == 0 && c.1 >= 3 {
+                        unverifiable.insert(elKey)
+                        log("live: positions in \(app.localizedName ?? id) can't be verified by hit-testing; drawing without the check")
+                    }
+                    return r
+                }()
+                if !ok && !unverifiable.contains(elKey) { mismatch = true; continue }
+            }
             if !m.rects.isEmpty { placed.append(m) }
+        }
+        if mismatch {
+            // Stale or wrong positions: drop them and recompute next tick (new layout key) instead of drawing them.
+            layoutSalt = layoutSalt.isEmpty ? "!" : ""
+            mismatchCount += 1
+            if mismatchCount == 1 || mismatchCount % 50 == 0 { log("live: positions didn't match the text under them in \(app.localizedName ?? id); recomputing") }
         }
         if !anyBounds {
             let again = noBoundsElement != nil
             noBoundsElement = (el, Date())
             TextTarget.reassertTree(app)
-            hintOnce(app, TextAccess.isCodeEditor(app) && Monaco.isMainEditor(el)
-                     ? "turn on its Settings → “Editor: Accessibility Support” → on, so it shows where its text is"
-                     : "it doesn't report where its text is on screen")
+            noBoundsReason = TextAccess.isCodeEditor(app) && Monaco.isMainEditor(el)
+                ? "turn on its Settings → “Editor: Accessibility Support” → on, so it shows where its text is"
+                : "it doesn't report where its text is on screen"
+            considerHint(app, noBoundsReason)
             if support[id] == nil { support[id] = "no positions" }
             if !again { log("live: a \(role) in \(app.localizedName ?? id) can't report text positions yet; retrying every \(Int(Self.negativeCacheLifetime)) s") }
             clear()
@@ -232,11 +268,13 @@ final class LiveChecker {
             if offFieldTicks == 10 {
                 let sample = found.first.flatMap { lineRects(el, $0.range, value)?.first }.map { "\(Int($0.minX)),\(Int($0.minY))" } ?? "?"
                 TextTarget.noteSkip(app, "text positions fall outside the field (e.g. \(sample) vs field \(Int(visible.minX)),\(Int(visible.minY)) \(Int(visible.width))×\(Int(visible.height)))")
-                hintOnce(app, "the text positions it reports don't match the field on screen")
+                considerHint(app, "the text positions it reports don't match the field on screen")
             }
             clear(); return
         }
         offFieldTicks = 0
+        hintTrack = nil
+        unavailable[id] = nil
         if support[id] != "underlines" { support[id] = "underlines"; log("live: underlines in \(app.localizedName ?? id) (\(id))") }
         if placed != marks { marks = placed }
         overlay.show(marks, in: visible)
@@ -297,27 +335,64 @@ final class LiveChecker {
 
     // MARK: Hints and errors
 
-    private var hinted = Set<String>()
     private(set) var lastError: (message: String, at: Date)?
     private var errorShown = Set<String>()
 
-    /// Once per app per session: say why there are no underlines, instead of failing silently.
-    /// Once per app per session: say why there are no underlines, instead of failing silently.
+    /// Why underlines aren't available in an app this session (bundle id → reason), for the quiet menu line.
+    private(set) var unavailable: [String: String] = [:]
+    private var noBoundsReason = "it doesn't report where its text is on screen"
+    /// Positions already checked against the text under them (layout|version|range → ok).
+    private var verified: [String: Bool] = [:]
+    private var layoutSalt = ""
+    private var verifyCounts: [Int: (Int, Int)] = [:]   // element → (matches, mismatches)
+    private var unverifiable = Set<Int>()
+    private var mismatchCount = 0
+
+    /// Whether a hit-tested character index lies in (or right at the edge of) the underlined range. Pure.
+    static func indexMatches(_ idx: Int?, _ range: NSRange) -> Bool {
+        guard let idx else { return true } // the app can't hit-test: nothing to check against
+        return idx >= range.location - 1 && idx <= NSMaxRange(range) + 1
+    }
+
+    /// The failure being watched: which element, since when, how many checks, its text then, keystrokes then.
+    private struct HintTrack { var key: Int; var since: Date; var ticks: Int; var signature: Int?; var keysAtStart: Int }
+    private var hintTrack: HintTrack?
+
+    /// A failure in this app: hint only with evidence (see `Hints.warranted`); otherwise stay quiet.
+    private func considerHint(_ app: NSRunningApplication, _ reason: String) {
+        guard let id = app.bundleIdentifier, app.processIdentifier != getpid() else { return }
+        let axApp = AXUIElementCreateApplication(app.processIdentifier)
+        guard let f = TextTarget.focusedRaw(app, axApp) else { hintTrack = nil; return } // transient: nothing focused
+        let key = Int(bitPattern: UInt(CFHash(f)))
+        let sig = Hints.signature(f)
+        if hintTrack?.key != key { hintTrack = HintTrack(key: key, since: Date(), ticks: 0, signature: sig, keysAtStart: typingInFrontApp(app)) }
+        hintTrack!.ticks += 1
+        let t = hintTrack!
+        let ev = Hints.Evidence(bundleID: id, role: TextAccess.attr(f, kAXRoleAttribute) as? String ?? "",
+                                subrole: TextAccess.attr(f, kAXSubroleAttribute) as? String ?? "",
+                                description: (TextAccess.attr(f, kAXDescriptionAttribute) as? String ?? "") + " " + (TextAccess.attr(f, kAXTitleAttribute) as? String ?? ""),
+                                editable: Hints.isEditable(f), keys: max(0, typingInFrontApp(app) - t.keysAtStart),
+                                failingFor: Date().timeIntervalSince(t.since), ticks: t.ticks,
+                                textChanged: sig != nil && sig != t.signature, textReadable: sig != nil)
+        guard Hints.warranted(ev) else { return }
+        unavailable[id] = reason
+        hintOnce(app, reason)
+    }
+
+    /// At most once per app, ever (remembered across launches), unless hints are turned off.
     private func hintOnce(_ app: NSRunningApplication, _ reason: String) {
-        guard let id = app.bundleIdentifier, !hinted.contains(id) else { return }
-        // Next to the field the user is typing in (or the pointer), on that field's screen, for 8 s.
+        guard let id = app.bundleIdentifier, Settings.shared.showUnavailableHints, Settings.shared.persist, !Hints.alreadyHinted(id) else { return }
+        Hints.markHinted(id)
         let axApp = AXUIElementCreateApplication(app.processIdentifier)
         let anchor = TextTarget.focusedRaw(app, axApp).flatMap { Self.frame($0) }.map(TextAccess.flip)
-        hinted.insert(id)
         let name = app.localizedName ?? id
-        let phrase = Settings.shared.triggerPhrase
         log("live: no underlines in \(name) (\(id)): \(reason); hint shown")
-        HUD.shared.show("Underlines aren't available in \(name): \(reason). \(phrase.prefix(1).uppercased() + phrase.dropFirst()) to correct instead. (Menu → Copy Diagnostics… shows details.)",
-                        style: .error, near: anchor, duration: 8)
+        HintCard.shared.show("No underlines in \(name) here — \(Settings.shared.triggerPhrase) to correct.", near: anchor)
     }
 
     /// Keys typed in the front app since it came to the front (to tell "typing in a field we can't use" from "just browsing").
     private var typing: (pid: pid_t, count: Int) = (0, 0)
+    private var clickMonitor: Any?
     private func typingInFrontApp(_ app: NSRunningApplication) -> Int { typing.pid == app.processIdentifier ? typing.count : 0 }
 
     /// Problems that stop live checking (no credit, bad key, model gone) are shown once, not just logged.
@@ -509,10 +584,17 @@ final class LiveChecker {
 
     func startKeyMonitor() {
         guard keyMonitor == nil else { return }
+        // A click starts over: a hint needs typing after it, in the same field.
+        clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            self?.typing = (0, 0)
+            self?.hintTrack = nil
+        }
         keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] e in
             guard let self else { return }
             self.gate.lastTyped = Date()
-            if !e.modifierFlags.contains(.command), let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier {
+            // Count only typing (printable characters), not shortcuts, arrows or function keys.
+            let printable = (e.characters ?? "").unicodeScalars.contains { $0.value >= 0x20 && !(0xF700...0xF8FF).contains($0.value) }
+            if printable, e.modifierFlags.intersection([.command, .control]).isEmpty, let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier {
                 self.typing = self.typing.pid == pid ? (pid, self.typing.count + 1) : (pid, 1)
             }
             self.syncKeys()

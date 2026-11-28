@@ -88,6 +88,10 @@ final class Settings: ObservableObject {
     @Published var writingLanguages: [String] { didSet { guard persist else { return }; defaults.set(writingLanguages, forKey: "writingLanguages") } }
     /// Whether text in languages not listed in Settings → Languages is checked.
     @Published var checkOtherLanguages: Bool { didSet { guard persist else { return }; defaults.set(checkOtherLanguages, forKey: "checkOtherLanguages") } }
+    /// Show "no underlines here" hints (each app at most once, ever).
+    @Published var showUnavailableHints: Bool { didSet { guard persist else { return }; defaults.set(showUnavailableHints, forKey: "showUnavailableHints") } }
+    /// Apps that have already had that hint.
+    @Published var hintedApps: [String] { didSet { guard persist else { return }; defaults.set(hintedApps, forKey: "hintedApps") } }
     /// Show "Today: N calls · X tokens" in the menu.
     @Published var showUsageInMenu: Bool { didSet { guard persist else { return }; defaults.set(showUsageInMenu, forKey: "showUsageInMenu") } }
     /// Bundle ids where live checking is off.
@@ -145,6 +149,8 @@ final class Settings: ObservableObject {
         liveChecking = defaults.object(forKey: "liveChecking") as? Bool ?? true
         privacyConsent = defaults.bool(forKey: "privacyConsent")
         showUsageInMenu = defaults.bool(forKey: "showUsageInMenu")
+        showUnavailableHints = defaults.object(forKey: "showUnavailableHints") as? Bool ?? true
+        hintedApps = defaults.stringArray(forKey: "hintedApps") ?? []
         // Default: every language (opt-out).
         writingLanguages = defaults.stringArray(forKey: "writingLanguages") ?? Settings.defaultWritingLanguages()
         checkOtherLanguages = defaults.object(forKey: "checkOtherLanguages") as? Bool ?? true

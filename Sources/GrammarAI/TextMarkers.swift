@@ -22,6 +22,12 @@ enum TextMarkers {
     private static var walk: Walk?
     /// Bumped whenever the text of the field changes (LiveChecker sets it).
     static var version = 0
+    /// The field's layout (frame, plus a one-second bucket for scrolling inside it): position caches are keyed by it,
+    /// so a page scroll, a resize or a scroll inside the field never reuses old positions.
+    static var layout = ""
+
+    /// The character index at a screen point (AX coordinates), if the app answers; for verifying underlines.
+    static func indexAt(_ el: AXUIElement, _ p: CGPoint) -> Int? { index(el, at: p) }
 
     private static func param(_ el: AXUIElement, _ name: String, _ arg: CFTypeRef) -> CFTypeRef? {
         var out: AnyObject?
@@ -177,7 +183,7 @@ enum TextMarkers {
     static func bounds(_ el: AXUIElement, _ range: NSRange, fieldFrame: CGRect?) -> CGRect? {
         guard range.length > 0, NSMaxRange(range) <= maxWalk, supported(el),
               verify(el, upTo: max(1, min(NSMaxRange(range), 64))) else { return nil }
-        let key = "\(CFHash(el))|\(version)|\(range.location)|\(range.length)"
+        let key = "\(CFHash(el))|\(version)|\(layout)|\(range.location)|\(range.length)"
         if let c = positionCache[key] { return c }
         if positionCache.count > 500 { positionCache.removeAll() }
         let textLength = TextTarget.number(el, kAXNumberOfCharactersAttribute) ?? NSMaxRange(range)
@@ -274,7 +280,7 @@ enum TextMarkers {
     /// lines are matched to the textarea's text by content (see `matchLines`), because its text may be just a page
     /// of the file, the view may be scrolled, and a highlighted file (Markdown) splits each line into tokens.
     private static func runs(_ el: AXUIElement) -> [Run] {
-        let key = "\(CFHash(el))|\(version)"
+        let key = "\(CFHash(el))|\(version)|\(layout)"
         if let c = runCache, c.0 == key { return c.1 }
         var out: [Run] = []
         guard let full = TextTarget.text(el)?.0 else { runCache = (key, out); return out }
@@ -318,14 +324,14 @@ enum TextMarkers {
     /// Monaco only: the parts of the text that are on screen (whole text lines), or nil if unknown.
     static func visibleRanges(_ el: AXUIElement) -> [NSRange]? {
         _ = runs(el)
-        guard let m = lastLineMatch, m.0 == "\(CFHash(el))|\(version)", m.1.matchedLines > 0 else { return nil }
+        guard let m = lastLineMatch, m.0 == "\(CFHash(el))|\(version)|\(layout)", m.1.matchedLines > 0 else { return nil }
         return m.1.visibleRanges
     }
 
     /// Monaco only: textarea lines, visible lines, matched lines (for Copy Diagnostics).
     static func lineMatch(_ el: AXUIElement) -> LineMatch? {
         _ = runs(el)
-        guard let m = lastLineMatch, m.0 == "\(CFHash(el))|\(version)" else { return nil }
+        guard let m = lastLineMatch, m.0 == "\(CFHash(el))|\(version)|\(layout)" else { return nil }
         return m.1
     }
 
@@ -443,7 +449,7 @@ enum TextMarkers {
     /// The field's visible lines: probing down its left edge, where the character index at the left jumps,
     /// a new line starts. Cached per field and text version.
     private static func lines(_ el: AXUIElement, field f: CGRect) -> [Line] {
-        let key = "\(CFHash(el))|\(version)"
+        let key = "\(CFHash(el))|\(version)|\(layout)"
         if let t = lineTables[key] { return t }
         if lineTables.count > 50 { lineTables.removeAll() }
         var bands: [(start: Int, top: CGFloat, bottom: CGFloat)] = []

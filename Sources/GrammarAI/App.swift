@@ -259,6 +259,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let i = item("⚠︎ Live checking paused: \(e.message.prefix(70))", #selector(openSettings))
             menu.addItem(i)
         }
+        if s.liveChecking, let front = NSWorkspace.shared.frontmostApplication, let fid = front.bundleIdentifier,
+           LiveChecker.shared.unavailable[fid] != nil {
+            let i = item("Underlines unavailable in \(front.localizedName ?? fid) — why?", #selector(explainUnavailable(_:)))
+            i.representedObject = fid
+            menu.addItem(i)
+        }
         if s.liveChecking && !s.privacyConsent && status == .ready {
             menu.addItem(item("Live checking needs your OK — Review…", #selector(askConsent)))
         }
@@ -331,6 +337,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         refreshIcon()
     }
     @objc private func askConsent() { Consent.ask(); refreshIcon() }
+    @objc private func explainUnavailable(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String, let reason = LiveChecker.shared.unavailable[id] else { return }
+        let name = NSRunningApplication.runningApplications(withBundleIdentifier: id).first?.localizedName ?? id
+        let a = NSAlert()
+        a.messageText = "No underlines in \(name) here"
+        a.informativeText = "Nib can't show underlines in this field: \(reason).\n\n\(Settings.shared.triggerPhrase.prefix(1).uppercased() + Settings.shared.triggerPhrase.dropFirst()) to correct the field instead. For details, click in the field and choose Copy Diagnostics… from this menu."
+        NSApp.activate(ignoringOtherApps: true)
+        a.runModal()
+    }
     @objc private func togglePerApp(_ sender: NSMenuItem) {
         guard let id = sender.representedObject as? String else { return }
         let s = Settings.shared
@@ -1111,6 +1126,49 @@ enum DiffSelfTest {
             print("tighten \(twice == "a cat and the dog" ? "OK" : "FAIL"): the second of two equal words is changed, not the first (\(twice))")
             let uniq = T("我在家，明天在来", "我在家，明天再来", "我在家，明天在来")
             print("tighten \(applied("我在家，明天在来", "我在家，明天再来", "我在家，明天在来") == "我在家，明天再来" ? "OK" : "FAIL"): a span that occurs twice is widened until unique (\(uniq))")
+        }
+
+        // "No underlines here" hints: only with evidence of typing into an editable field that keeps failing.
+        do {
+            typealias E = Hints.Evidence
+            let base = E(bundleID: "com.google.Chrome", role: "AXTextArea", editable: true, keys: 12, failingFor: 6, ticks: 5, textChanged: true, textReadable: true)
+            var empty = base; empty.textChanged = false; empty.keys = 0
+            var button = base; button.role = "AXButton"
+            var address = base; address.role = "AXTextField"; address.description = "Address and search bar"
+            var finder = base; finder.bundleID = "com.apple.finder"
+            var transient = base; transient.failingFor = 1; transient.ticks = 1
+            var notEditable = base; notEditable.editable = false; notEditable.role = "AXGroup"
+            var afterClick = base; afterClick.keys = 0
+            var unreadable = base; unreadable.textReadable = false; unreadable.textChanged = false; unreadable.keys = 20
+            let cases: [(String, Bool, Bool)] = [
+                ("typing into a text area that keeps failing", Hints.warranted(base), true),
+                ("an empty field that hasn't received text", Hints.warranted(empty), false),
+                ("a button", Hints.warranted(button), false),
+                ("the address bar", Hints.warranted(address), false),
+                ("Finder / the desktop", Hints.warranted(finder), false),
+                ("a transient failure (just after the tree was re-asked)", Hints.warranted(transient), false),
+                ("a non-editable element", Hints.warranted(notEditable), false),
+                ("right after a click (no typing since)", Hints.warranted(afterClick), false),
+                ("an unreadable field after a lot of typing", Hints.warranted(unreadable), true),
+            ]
+            for (name, got, want) in cases { print("hints \(got == want ? "OK" : "FAIL"): \(name) → \(want ? "hint" : "quiet")") }
+            let r = NSRange(location: 10, length: 4)
+            let ok = LiveChecker.indexMatches(11, r) && LiveChecker.indexMatches(nil, r) && !LiveChecker.indexMatches(40, r) && !LiveChecker.indexMatches(2, r)
+            print("positions \(ok ? "OK" : "FAIL"): an underline is drawn only where the character under it belongs to the range")
+        }
+
+        // ✨ chip: just after the selection on the same line; below it near the screen edge; never over the selection.
+        do {
+            let vf = NSRect(x: 0, y: 25, width: 1440, height: 875)
+            let size = NSSize(width: 120, height: 40) // includes 6 pt transparent padding
+            let end = NSRect(x: 500, y: 400, width: 9, height: 18)
+            let a = SelectionChip.chipFrame(end: end, size: size, padding: 6, visible: vf).insetBy(dx: 6, dy: 6)
+            let sameLine = a.minX >= end.maxX && abs(a.midY - end.midY) < 1
+            print("chip \(sameLine ? "OK" : "FAIL"): right after the selection's end, centred on its line")
+            let edge = NSRect(x: 1400, y: 400, width: 9, height: 18)
+            let b = SelectionChip.chipFrame(end: edge, size: size, padding: 6, visible: vf).insetBy(dx: 6, dy: 6)
+            print("chip \(b.maxY <= edge.minY && vf.insetBy(dx: 8, dy: 8).contains(b) && abs(b.maxX - edge.maxX) < 9 ? "OK" : "FAIL"): at the screen's right edge it goes below the line, aligned to the end, on screen")
+            print("chip \(!a.intersects(end) && !b.intersects(edge) ? "OK" : "FAIL"): never covers the selected text")
         }
 
         // Overlapping issues become one suggestion.
