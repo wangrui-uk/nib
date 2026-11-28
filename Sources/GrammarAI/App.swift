@@ -1171,6 +1171,23 @@ enum DiffSelfTest {
             print("chip \(!a.intersects(end) && !b.intersects(edge) ? "OK" : "FAIL"): never covers the selected text")
         }
 
+        // A paragraph that wraps in a rich editor is one text run two lines tall: each range goes on its own line.
+        do {
+            let text = "Our team reviewed every report from the spring audit, and they has always checked each figure twice, even when the deadline is tight." as NSString
+            // A frame two lines tall at a ~14 pt font, as wide as the first wrapped line at that size.
+            let font = NSFont.systemFont(ofSize: 14)
+            let firstLine = text.substring(to: 98) as NSString
+            let width = firstLine.size(withAttributes: [.font: font]).width + 4
+            let frame = CGRect(x: 375, y: 743, width: width, height: 2 * 14 * 1.2)
+            let a = TextMarkers.wrappedRunRect(text, text.range(of: "has always"), frame: frame)
+            let b = TextMarkers.wrappedRunRect(text, text.range(of: "deadline"), frame: frame)
+            let lineH = frame.height / 2
+            let ok = abs(a.minY - frame.minY) < 1 && abs(a.height - lineH) < 1 && abs(b.minY - (frame.minY + lineH)) < 1 && b.minX < frame.minX + frame.width * 0.6
+            print("wrapped run \(ok ? "OK" : "FAIL"): a range on line 1 sits on line 1 (y \(Int(a.minY))), one on line 2 on line 2 (y \(Int(b.minY)), x \(Int(b.minX)))")
+            let single = TextMarkers.wrappedRunRect("short text" as NSString, NSRange(location: 6, length: 4), frame: CGRect(x: 0, y: 0, width: 80, height: 18))
+            print("wrapped run \(single.height == 18 && single.minX > 30 ? "OK" : "FAIL"): a one-line run is unchanged")
+        }
+
         // Overlapping issues become one suggestion.
         do {
             let t = "he doont know where the files is"

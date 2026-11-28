@@ -432,15 +432,76 @@ enum TextMarkers {
 
     private static func runBounds(_ el: AXUIElement, _ range: NSRange) -> CGRect? {
         guard let run = runs(el).first(where: { $0.start <= range.location && range.location < $0.start + $0.length }),
-              run.frame.height > 0, run.frame.height < 40, run.length > 0 else { return nil }
+              run.frame.height > 0, run.frame.height < 8 * 40, run.length > 0 else { return nil }
         let local = range.location - run.start
         let len = min(range.length, run.start + run.length - range.location)
         guard let text = runText(el, run) else {
+            guard run.frame.height < 26 else { return nil } // a wrapped run can't be placed without its text
             let w = run.frame.width / CGFloat(run.length)
             return CGRect(x: run.frame.minX + w * CGFloat(local), y: run.frame.minY, width: max(4, w * CGFloat(len)), height: run.frame.height)
         }
-        let (x0, x1) = Self.proportionalSpan(text, NSRange(location: local, length: len), width: run.frame.width)
-        return CGRect(x: run.frame.minX + x0, y: run.frame.minY, width: max(4, x1 - x0), height: run.frame.height)
+        return wrappedRunRect(text, NSRange(location: local, length: len), frame: run.frame)
+    }
+
+    /// Where a range lies inside a run that may wrap over several lines (a paragraph in a rich editor is one run
+    /// whose frame is several lines tall). The number of lines and the font size are found together: for n lines,
+    /// the line height is frame height / n and the font about line height / 1.2; the n whose simulated word wrap at
+    /// the run's width also gives n lines wins. x is scaled so the widest simulated line matches the run's width.
+    /// Returns the rect on the range's line (the union of rows if it spans several). Pure, for self-tests.
+    static func wrappedRunRect(_ text: NSString, _ r: NSRange, frame: CGRect) -> CGRect {
+        func single() -> CGRect {
+            let (x0, x1) = proportionalSpan(text, r, width: frame.width)
+            return CGRect(x: frame.minX + x0, y: frame.minY, width: max(4, x1 - x0), height: frame.height)
+        }
+        guard frame.height >= 26, text.length > 1 else { return single() }
+        var chosen: (n: Int, font: NSFont, rows: [NSRange])?
+        for n in 2...8 {
+            let lineH = frame.height / CGFloat(n)
+            guard lineH >= 10 else { break }
+            let font = NSFont.systemFont(ofSize: lineH / 1.2)
+            let rows = wrap(text, width: frame.width, font: font)
+            if rows.count == n { chosen = (n, font, rows); break }
+        }
+        guard let c = chosen else { return single() }
+        func w(_ x: String) -> CGFloat { (x as NSString).size(withAttributes: [.font: c.font]).width }
+        let widest = c.rows.map { w(text.substring(with: $0).trimmingCharacters(in: .whitespaces)) }.max() ?? frame.width
+        let scale = widest > 0 ? frame.width / widest : 1
+        let lineH = frame.height / CGFloat(c.n)
+        func row(of i: Int) -> Int { c.rows.lastIndex { $0.location <= i } ?? 0 }
+        let first = row(of: r.location), last = row(of: max(r.location, NSMaxRange(r) - 1))
+        var out = CGRect.null
+        for k in first...last {
+            let rr = c.rows[k]
+            let from = max(r.location, rr.location), to = min(NSMaxRange(r), NSMaxRange(rr))
+            let x0 = w(text.substring(with: NSRange(location: rr.location, length: from - rr.location))) * scale
+            let x1 = w(text.substring(with: NSRange(location: rr.location, length: to - rr.location))) * scale
+            out = out.union(CGRect(x: frame.minX + x0, y: frame.minY + CGFloat(k) * lineH, width: max(4, x1 - x0), height: lineH))
+        }
+        return out
+    }
+
+    /// Greedy word wrap (breaking after spaces; CJK anywhere) at `width` in `font`: the rows' ranges.
+    static func wrap(_ text: NSString, width: CGFloat, font: NSFont) -> [NSRange] {
+        func w(_ r: NSRange) -> CGFloat { (text.substring(with: r) as NSString).size(withAttributes: [.font: font]).width }
+        var rows: [NSRange] = []
+        var start = 0, lastBreak = -1, i = 0
+        while i < text.length {
+            let cr = text.rangeOfComposedCharacterSequence(at: i)
+            let end = NSMaxRange(cr)
+            let isSpace = text.character(at: i) == 32
+            let wide = Unicode.Scalar(text.character(at: i)).map(Lang.isWide) ?? false
+            // Trailing spaces may hang past the edge, as in browsers.
+            if !isSpace, w(NSRange(location: start, length: end - start)) > width + 0.5, i > start {
+                let brk = lastBreak > start ? lastBreak : i
+                rows.append(NSRange(location: start, length: brk - start))
+                start = brk; lastBreak = -1
+                continue
+            }
+            if isSpace || wide { lastBreak = end }
+            i = end
+        }
+        rows.append(NSRange(location: start, length: text.length - start))
+        return rows
     }
 
     private struct Line { let y: CGFloat; let height: CGFloat; let start: Int; let nextStart: Int? }

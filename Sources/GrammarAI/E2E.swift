@@ -48,7 +48,7 @@ enum E2E {
         let ceBody = sample == englishSample ? "i has went to the <b>store</b> yesterday and buyed three apple, they was delicious." : sample
         let ce = page("contenteditable", "<div id=f contenteditable style='border:1px solid #999;padding:6px'>\(ceBody)</div>")
         let rich2 = page("richeditor", """
-            <div style='border:1px solid #bbb;width:640px'><div style='border-bottom:1px solid #ddd;padding:4px'>
+            <div style='border:1px solid #bbb;width:420px'><div style='border-bottom:1px solid #ddd;padding:4px'>
             <button>B</button> <button>I</button> <button>U</button> <span>Paragraph</span></div>
             <div class='ql-container'><div id=f class='ql-editor' contenteditable style='padding:8px;min-height:80px'><p>\(ceBody)</p></div></div></div>
             """)

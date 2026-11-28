@@ -3,6 +3,7 @@
 ## 2.2.4
 
 - **No more false "Underlines aren't available" messages.** A hint now needs evidence: you're typing into an editable field (never a button, link, list, the address bar, a search field, Finder or the desktop), its text actually changed, and the failure has lasted a few seconds (not a moment while an app rebuilds its accessibility tree, and not right after a click). It appears at most once per app, ever, as a short card ("No underlines in Chrome here — double-tap ⌥ to correct.") with **Don't show again**; after that, the menu shows "Underlines unavailable in <App> — why?". Turn hints off in Settings → Live checking.
+- **Underlines in wrapped paragraphs of rich editors** (Chrome forms, Slack…) now sit on the right line. A paragraph that wraps is one text run several lines tall; Nib placed every underline at the bottom of that run, so words on the first line were underlined on the last. It now works out the run's lines and places each underline on its own line.
 - **Chrome underlines stay on their words.** Positions are no longer reused after the page or the field scrolls or the layout changes, only underlines inside the visible field are drawn, and in Chrome and Electron apps each underline is checked against the character under it before it's drawn; a mismatch is recomputed instead of drawn in empty space.
 - **✨ Rewrite chip**: sized for your popup font (no more "Rewri…" with large fonts), and placed just after the selection on the same line (or just below it near the screen edge), never over the selected text.
 
